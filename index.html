@@ -8,7 +8,7 @@
         body {
             margin: 0;
             padding: 0;
-            background-image: url('bg.png');
+            background-image: url('your-background-image.jpg'); /* Replace with your background image URL */
             background-size: cover;
             background-position: center center;
             background-repeat: no-repeat;
@@ -48,12 +48,25 @@
         .door-front {
             background-color: #cfcfcf;
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
+            text-align: center;
+            padding: 5px;
+        }
+        .door-front span {
+            font-size: 14px; /* "December" text */
+            margin-bottom: 5px;
+        }
+        .door-front .number {
+            font-size: 30px; /* Larger number */
+            font-weight: bold;
         }
         .door-back {
             background-color: #ffcc00; /* Example surprise color */
             transform: rotateY(180deg);
+            background-size: cover; /* Ensure image covers the space */
+            background-position: center center;
         }
         .door.disabled {
             pointer-events: none;
@@ -75,17 +88,17 @@
 
         // Arrays with image URLs (replace these with your actual image URLs)
         const frontImages = [
-            'f1.png', 'front-image2.jpg', 'front-image3.jpg', 
-            'front-image4.jpg', 'front-image5.jpg', 'front-image6.jpg',
-            'front-image7.jpg', 'front-image8.jpg', 'front-image9.jpg', 
-            'front-image10.jpg', 'front-image11.jpg', 'front-image12.jpg'
+            'door1-front.jpg', 'door2-front.jpg', 'door3-front.jpg', 
+            'door4-front.jpg', 'door5-front.jpg', 'door6-front.jpg',
+            'door7-front.jpg', 'door8-front.jpg', 'door9-front.jpg', 
+            'door10-front.jpg', 'door11-front.jpg', 'door12-front.jpg'
         ];
 
         const backImages = [
-            'b1.png', 'back-image2.jpg', 'back-image3.jpg', 
-            'back-image4.jpg', 'back-image5.jpg', 'back-image6.jpg',
-            'back-image7.jpg', 'back-image8.jpg', 'back-image9.jpg', 
-            'back-image10.jpg', 'back-image11.jpg', 'back-image12.jpg'
+            'surprise1-back.jpg', 'surprise2-back.jpg', 'surprise3-back.jpg', 
+            'surprise4-back.jpg', 'surprise5-back.jpg', 'surprise6-back.jpg',
+            'surprise7-back.jpg', 'surprise8-back.jpg', 'surprise9-back.jpg', 
+            'surprise10-back.jpg', 'surprise11-back.jpg', 'surprise12-back.jpg'
         ];
 
         // Loop through each day from 13th to 24th
@@ -102,6 +115,16 @@
             // Assign unique front image from the frontImages array
             doorFront.style.backgroundImage = `url("${frontImages[i - startDay]}")`; // Ensure correct index
             
+            // Add text: "December" and day number
+            const decemberText = document.createElement('span');
+            decemberText.textContent = 'December';
+            const numberText = document.createElement('div');
+            numberText.className = 'number';
+            numberText.textContent = i; // The day number
+
+            doorFront.appendChild(decemberText);
+            doorFront.appendChild(numberText);
+
             const doorBack = document.createElement('div');
             doorBack.className = 'door-back';
             
@@ -120,8 +143,6 @@
                 door.addEventListener('click', () => {
                     door.classList.toggle('flipped');
                 });
-                doorFront.textContent = ''; // Hide day number on front if enabled
-                doorBack.textContent = ''; // Add any text or leave empty for surprise image
             }
 
             door.appendChild(doorInner);
