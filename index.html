@@ -14,26 +14,25 @@
             background-repeat: no-repeat;
             background-attachment: fixed;
             display: flex;
-            flex-direction: column;
             justify-content: center;
             align-items: center;
             height: 100vh;
             text-align: center;
         }
-        .test-mode {
-            margin-bottom: 20px;
-        }
+
         .calendar {
             display: grid;
             grid-template-columns: repeat(3, 100px);
             gap: 10px;
         }
+
         .door {
             width: 100px;
             height: 100px;
             position: relative;
             perspective: 1000px;
         }
+
         .door-inner {
             position: absolute;
             width: 100%;
@@ -41,55 +40,88 @@
             transition: transform 0.6s;
             transform-style: preserve-3d;
         }
+
         .door.flipped .door-inner {
             transform: rotateY(180deg);
         }
+
         .door-front, .door-back {
             position: absolute;
             width: 100%;
             height: 100%;
             backface-visibility: hidden;
         }
+
         .door-front {
-            background-color: #cfcfcf;
             display: flex;
-            flex-direction: column;
             justify-content: center;
             align-items: center;
             text-align: center;
-            padding: 5px;
         }
-        .door-front span {
-            font-size: 14px; /* "December" text */
-            margin-bottom: 5px;
-        }
-        .door-front .number {
-            font-size: 30px; /* Larger number */
-            font-weight: bold;
-        }
+
         .door-back {
-            background-color: #ffcc00; /* Surprise color */
             transform: rotateY(180deg);
-            background-size: cover; /* Ensure image covers the space */
+            background-size: cover;
             background-position: center center;
         }
+
         .door.disabled {
             pointer-events: none;
-            opacity: 0.5; /* Add a visual cue that the door is disabled */
+            opacity: 0.5;
         }
-        .door:hover {
-            cursor: pointer;
+
+        /* Colors for the front squares */
+        .door:nth-child(1) .door-front {
+            background-color: red;
         }
+
+        .door:nth-child(2) .door-front {
+            background-color: darkgreen;
+        }
+
+        .door:nth-child(3) .door-front {
+            background-color: gold;
+        }
+
+        .door:nth-child(4) .door-front {
+            background-color: green;
+        }
+
+        .door:nth-child(5) .door-front {
+            background-color: white;
+        }
+
+        .door:nth-child(6) .door-front {
+            background-color: lightblue;
+        }
+
+        .door:nth-child(7) .door-front {
+            background-color: purple;
+        }
+
+        .door:nth-child(8) .door-front {
+            background-color: pink;
+        }
+
+        .door:nth-child(9) .door-front {
+            background-color: brown;
+        }
+
+        .door:nth-child(10) .door-front {
+            background-color: orange;
+        }
+
+        .door:nth-child(11) .door-front {
+            background-color: yellow;
+        }
+
+        .door:nth-child(12) .door-front {
+            background-color: lightgreen;
+        }
+
     </style>
 </head>
 <body>
-
-    <!-- Test Mode Checkbox -->
-    <div class="test-mode">
-        <label for="testMode">
-            <input type="checkbox" id="testMode"> Test Mode (Enable all doors)
-        </label>
-    </div>
 
     <div class="calendar" id="calendar">
         <!-- Doors will be generated here -->
@@ -97,18 +129,10 @@
 
     <script>
         const calendar = document.getElementById('calendar');
-        const testModeCheckbox = document.getElementById('testMode');
         const today = new Date();
         const startDay = 13; // Start from December 13th
 
-        // Arrays with image URLs (replace with your actual image URLs)
-        const frontImages = [
-            'f1.png', 'f2.png', 'f3.png', 
-            'f4.png', 'f5.png', 'f6.png',
-            'f7.png', 'f8.png', 'f9.png', 
-            'f10.png', 'f11.png', 'f12.png'
-        ];
-
+        // Arrays with surprise image URLs (replace these with your actual image URLs)
         const backImages = [
             'b1.png', 'b2.png', 'b3.png', 
             'b4.png', 'b5.png', 'b6.png',
@@ -127,17 +151,11 @@
             const doorFront = document.createElement('div');
             doorFront.className = 'door-front';
             
-            // Assign unique front image from the frontImages array
-            doorFront.style.backgroundImage = `url("${frontImages[i - startDay]}")`; // Ensure correct index
-            
             // Add text: "December" and day number
-            const decemberText = document.createElement('span');
-            decemberText.textContent = 'December';
             const numberText = document.createElement('div');
             numberText.className = 'number';
             numberText.textContent = i; // The day number
 
-            doorFront.appendChild(decemberText);
             doorFront.appendChild(numberText);
 
             const doorBack = document.createElement('div');
@@ -149,21 +167,13 @@
             doorInner.appendChild(doorFront);
             doorInner.appendChild(doorBack);
             
-            // Enable or disable doors based on current date, unless Test Mode is on
-            if (!testModeCheckbox.checked) {
-                if (today.getMonth() + 1 < 12 || today.getDate() < i) {
-                    door.classList.add('disabled'); // Disable doors before the current date
-                    doorFront.textContent = i; // Display the day number
-                    doorBack.textContent = ''; // Keep the back empty if disabled
-                } else {
-                    door.addEventListener('click', () => {
-                        door.classList.toggle('flipped'); // Flip the door to show the surprise image
-                    });
-                }
+            // Enable or disable doors based on current date
+            if (today.getMonth() + 1 < 12 || today.getDate() < i) {
+                door.classList.add('disabled'); // Disable doors before the current date
+                doorFront.textContent = i; // Display the day number
             } else {
-                // In Test Mode, allow clicking all doors
                 door.addEventListener('click', () => {
-                    door.classList.toggle('flipped');
+                    door.classList.toggle('flipped'); // Flip the door to show the surprise image
                 });
             }
 
@@ -175,16 +185,6 @@
         for (let i = startDay; i <= 24; i++) {
             createDoor(i);
         }
-
-        // Update door status when test mode is toggled
-        testModeCheckbox.addEventListener('change', () => {
-            // Clear existing doors and regenerate based on test mode
-            calendar.innerHTML = '';
-            for (let i = startDay; i <= 24; i++) {
-                createDoor(i);
-            }
-        });
-
     </script>
 </body>
 </html>
