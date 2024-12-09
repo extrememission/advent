@@ -58,6 +58,9 @@
         .door.disabled {
             pointer-events: none;
         }
+        .door:hover {
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
@@ -70,7 +73,23 @@
         const today = new Date();
         const startDay = 13; // Start from December 13th
 
-        for (let i = 1; i <= 12; i++) {
+        // Arrays with image URLs (replace these with your actual image URLs)
+        const frontImages = [
+            'front-image1.jpg', 'front-image2.jpg', 'front-image3.jpg', 
+            'front-image4.jpg', 'front-image5.jpg', 'front-image6.jpg',
+            'front-image7.jpg', 'front-image8.jpg', 'front-image9.jpg', 
+            'front-image10.jpg', 'front-image11.jpg', 'front-image12.jpg'
+        ];
+
+        const backImages = [
+            'back-image1.jpg', 'back-image2.jpg', 'back-image3.jpg', 
+            'back-image4.jpg', 'back-image5.jpg', 'back-image6.jpg',
+            'back-image7.jpg', 'back-image8.jpg', 'back-image9.jpg', 
+            'back-image10.jpg', 'back-image11.jpg', 'back-image12.jpg'
+        ];
+
+        // Loop through each day from 13th to 24th
+        for (let i = startDay; i <= 24; i++) {
             const door = document.createElement('div');
             door.className = 'door';
             
@@ -80,19 +99,20 @@
             const doorFront = document.createElement('div');
             doorFront.className = 'door-front';
             
-            // Replace with your default image URL
-            doorFront.style.backgroundImage = 'url("default-image.jpg")';
+            // Assign unique front image from the frontImages array
+            doorFront.style.backgroundImage = `url("${frontImages[i - startDay]}")`; // Ensure correct index
             
             const doorBack = document.createElement('div');
             doorBack.className = 'door-back';
             
-            // Replace with your surprise image URL
-            doorBack.style.backgroundImage = 'url("surprise-image.jpg")';
+            // Assign unique back image from the backImages array
+            doorBack.style.backgroundImage = `url("${backImages[i - startDay]}")`; // Ensure correct index
 
             doorInner.appendChild(doorFront);
             doorInner.appendChild(doorBack);
             
-            if (today.getMonth() + 1 < 12 || today.getDate() < startDay + i - 1) {
+            // Disable days before the current date
+            if (today.getMonth() + 1 < 12 || today.getDate() < i) {
                 door.classList.add('disabled');
                 doorFront.textContent = i; // Display the day number
                 doorBack.textContent = ''; // Keep the back empty if disabled
