@@ -20,39 +20,38 @@
 
     .container {
       width: 100%;
-      height: 100%;
+      max-width: 400px;
       text-align: center;
       background-color: #007bff;
       color: white;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
+      padding: 20px;
+      border-radius: 10px;
     }
 
     h1 {
       font-size: 2rem;
-      margin-bottom: 20px;
     }
 
     .stats {
-      font-size: 3rem; /* Larger font size for quick glances */
+      font-size: 2rem; /* Large enough for quick glances */
       font-weight: bold;
+      margin-top: 20px;
     }
 
     .button {
       display: inline-block;
       margin-top: 20px;
-      padding: 10px 20px; /* Smaller button size */
-      font-size: 1rem; /* Smaller font size */
-      color: #007bff;
-      background-color: white;
+      padding: 10px 20px; /* Standard button size */
+      font-size: 1rem; /* Standard font size */
+      color: white;
+      background-color: #007bff;
       border-radius: 10px;
       border: none;
       cursor: pointer;
     }
 
     .button:hover {
-      background-color: #f0f0f0;
+      background-color: #0056b3;
     }
 
     .hidden {
@@ -72,8 +71,6 @@
   </div>
 
   <button id="startButton" class="button">Start</button>
-  <button id="stopButton" class="button hidden">Stop</button>
-  <button id="downloadButton" class="button hidden">Download Results</button>
 </div>
 
 <script>
@@ -86,8 +83,6 @@ let timerInterval = null; // Interval for updating time
 // Elements
 const statusElement = document.getElementById("status");
 const startButton = document.getElementById("startButton");
-const stopButton = document.getElementById("stopButton");
-const downloadButton = document.getElementById("downloadButton");
 const distanceElement = document.getElementById("distance");
 const timeElement = document.getElementById("time");
 
@@ -98,14 +93,18 @@ startButton.addEventListener("click", () => {
     return;
   }
 
+  if (startButton.textContent === "Start") {
+    startTracking();
+    startButton.textContent = "Running..."; // Change button text to "Running..."
+    statusElement.textContent = "Tracking your run...";
+  }
+});
+
+// Function to start tracking
+function startTracking() {
   startTime = new Date();
   distance = 0; // Reset distance
   previousPosition = null; // Reset previous position
-
-  statusElement.textContent = "Running..."; // Update status text
-  
-  startButton.classList.add("hidden");
-  stopButton.classList.remove("hidden");
 
   timerInterval = setInterval(updateTime, 1000); // Update time every second
 
@@ -127,50 +126,44 @@ startButton.addEventListener("click", () => {
       previousPosition = { latitude, longitude };
     },
     (error) => {
-      alert("Error getting location. Please try again.");
+      alert("Error getting location. Please ensure location services are enabled.");
     },
     { enableHighAccuracy: true }
   );
-});
+}
 
-// Stop tracking
-stopButton.addEventListener("click", () => {
-  if (watchId !== null) {
-    navigator.geolocation.clearWatch(watchId);
-    watchId = null;
-
-    clearInterval(timerInterval); // Stop updating time
-
-    statusElement.textContent = "Run stopped.";
-    
-    startButton.classList.remove("hidden");
-    stopButton.classList.add("hidden");
-    downloadButton.classList.remove("hidden"); // Show download button
-  }
-});
-
-// Download results
-downloadButton.addEventListener("click", () => {
-  const endTime = new Date();
-  const duration = formatTime((endTime - startTime) / 1000); // Total time in seconds
-
-  const data = `
-Run Summary:
-Distance: ${distance.toFixed(2)} miles
-Duration: ${duration}
-`;
-
-  const blob = new Blob([data], { type: "text/plain" });
-  const url = URL.createObjectURL(blob);
-
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "run_results.txt";
+// Function to update elapsed time
+function updateTime() {
+  const currentTime = new Date();
+  const elapsedSeconds = Math.floor((currentTime - startTime) / 1000);
   
-a.click();
-URL.revokeObjectURL(url);
-});
+  const minutes = Math.floor(elapsedSeconds / 60).toString().padStart(2, '0');
+  const seconds = (elapsedSeconds % 60).toString().padStart(2, '0');
+  
+  timeElement.textContent = `${minutes}:${seconds}`;
+}
 
 // Calculate distance between two coordinates using Haversine formula (in miles)
 function calculateDistance(lat1, lon1, lat2, lon2) {
-const R=3958.8;// Radius of Earth in miles.
+  const R = 3958.8; // Radius of Earth in miles
+  const dLat = degreesToRadians(lat2 - lat1);
+  const dLon = degreesToRadians(lon2 - lon1);
+
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(degreesToRadians(lat1)) *
+      Math.cos(degreesToRadians(lat2)) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  
+return R * c;// Distance in miles.
+}
+
+// Convert degrees to radians
+function degreesToRadians(degrees) {
+return degrees*(Math.PI/180);}
+</script>
+</body>
+</html>
