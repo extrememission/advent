@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Run Tracker</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <style>
     /* Ensure full-screen background */
     html, body {
@@ -40,6 +39,15 @@
       margin-top: 20px;
     }
 
+    .stat-label {
+      font-size: 1.2rem; /* Label size */
+    }
+
+    .stat-value {
+      font-size: 2.5rem; /* Larger value size */
+      font-weight: bold;
+    }
+
     .button {
       display: inline-block;
       margin-top: 20px;
@@ -73,20 +81,15 @@
       font-weight: bold;
       margin-top: 20px;
     }
-
-    .gps-indicator {
-        width: 20px;
-        height: 20px;
-        border-radius: 50%;
-        display: inline-block;
-        margin-right: 10px;
-        background-color: red; /* Default to red */
+    
+    .summary {
+        display: none; /* Initially hidden */
+        margin-top: 20px;
+        text-align: left; /* Align to left for better readability */
     }
     
-    .gps-status {
-        margin-top: -10px; /* Adjust position slightly */
-        font-size: small;
-        color: white;
+    .summary p {
+        margin-bottom: 10px; /* Spacing between summary items */
     }
     
   </style>
@@ -99,27 +102,34 @@
   
   <p id="startInfo" class="hidden"></p> <!-- New paragraph for start date and time -->
 
-  <div class="gps-indicator" id="gpsIndicator"></div>
-  <span id="gpsStatus" class="gps-status">Checking GPS...</span>
-
   <div class="stats">
-    <p><strong>Distance:</strong> <span id="distance">0.00</span> miles</p>
-    <p><strong>Time:</strong> <span id="time">00:00</span></p>
-    <p><strong>Elevation Gain:</strong> <span id="elevation">0</span> ft</p>
+    <p class="stat-label"><strong>Distance:</strong></p>
+    <p id="distance" class="stat-value">0.00</p>
+    
+    <p class="stat-label"><strong>Time:</strong></p>
+    <p id="time" class="stat-value">00:00</p>
+    
   </div>
 
   <button id="startButton" class="button">Start</button>
   <button id="stopButton" class="button hidden">Stop</button>
+
+  <!-- Summary section -->
+  <div class="summary" id="summary">
+    <h2>Run Summary</h2>
+    <p id="summaryStartTime"></p>
+    <p id="summaryDistance"></p>
+    <p id="summaryDuration"></p>
+    <button id="newRunButton" class="button">Start New Run</button>
+  </div>
 </div>
 
 <script>
 let watchId = null; // ID for geolocation tracking
 let startTime = null; // Start time of the run
 let distance = 0; // Total distance in miles
-let elevationGain = 0; // Total elevation gain in feet
 let previousPosition = null; // Last recorded position
 let timerInterval = null; // Interval for updating time
-let gpsSignalGood = false; // Track GPS signal quality
 
 // Elements
 const trackingIndicator = document.getElementById("trackingIndicator");
@@ -127,165 +137,145 @@ const startButton = document.getElementById("startButton");
 const stopButton = document.getElementById("stopButton");
 const distanceElement = document.getElementById("distance");
 const timeElement = document.getElementById("time");
-const elevationElement = document.getElementById("elevation");
 const startInfo = document.getElementById("startInfo");
-const gpsIndicator = document.getElementById("gpsIndicator");
-const gpsStatus = document.getElementById("gpsStatus");
+const summarySection = document.getElementById("summary");
+const summaryStartTime = document.getElementById("summaryStartTime");
+const summaryDistance = document.getElementById("summaryDistance");
+const summaryDuration = document.getElementById("summaryDuration");
+const newRunButton = document.getElementById("newRunButton");
 
 // Start tracking
 startButton.addEventListener("click", () => {
-  if (!navigator.geolocation) {
-    alert("Geolocation is not supported by your browser.");
-    return;
-  }
+   if (!navigator.geolocation) {
+       alert("Geolocation is not supported by your browser.");
+       return;
+   }
 
-  startTracking();
+   startTracking();
 });
 
 // Stop tracking
 stopButton.addEventListener("click", () => {
-  stopTracking();
+   stopTracking();
+});
+
+// Start a new run
+newRunButton.addEventListener("click", () => {
+   resetApp();
 });
 
 // Function to start tracking
 function startTracking() {
-  startTime = new Date();
+   startTime = new Date();
   
-// Display start date and time
-startInfo.textContent = `Run started at ${startTime.toLocaleString()}`;
-startInfo.classList.remove('hidden');
+   // Display start date and time
+   startInfo.textContent = `Run started at ${startTime.toLocaleString()}`;
+   startInfo.classList.remove('hidden');
 
-distance = 0;
-elevationGain = 0;
-previousPosition = null;
+   distance = 0;
+   previousPosition = null;
 
-trackingIndicator.classList.remove("hidden"); // Show flashing "Tracking..." text
+   trackingIndicator.classList.remove("hidden"); // Show flashing "Tracking..." text
   
-startButton.classList.add("hidden");
-stopButton.classList.remove("hidden");
+   startButton.classList.add("hidden");
+   stopButton.classList.remove("hidden");
 
-timerInterval = setInterval(updateTime, 1000);
+   timerInterval = setInterval(updateTime, 1000);
 
-// Start watching the GPS position
-watchId = navigator.geolocation.watchPosition(
-    (position) => {
-        const { latitude, longitude, altitude } = position.coords;
+   watchId = navigator.geolocation.watchPosition(
+       (position) => {
+           const { latitude, longitude } = position.coords;
 
-        // Check GPS accuracy
-        if (position.coords.accuracy <= 30) { // Check if accuracy is within acceptable range (30 meters)
-            gpsSignalGood = true; // Good GPS signal
-            gpsIndicator.style.backgroundColor = 'green'; // Change indicator to green
-            gpsStatus.textContent = "GPS Signal Good";
-        } else {
-            gpsSignalGood = false; // Poor GPS signal
-            gpsIndicator.style.backgroundColor = 'red'; // Change indicator to red
-            gpsStatus.textContent = "Poor GPS Signal";
-        }
+           if (previousPosition) {
+               const d = calculateAdvancedDistance(
+                   previousPosition.latitude,
+                   previousPosition.longitude,
+                   latitude,
+                   longitude
+               );
 
-        if (previousPosition) {
-            const d = calculateAdvancedDistance(
-                previousPosition.latitude,
-                previousPosition.longitude,
-                previousPosition.altitude || altitude || 0,
-                latitude,
-                longitude,
-                altitude || previousPosition.altitude || 0
-            );
+               // Ignore small jumps less than ~10 feet (~3 meters)
+               const movementThreshold = (10 / 5280); // Convert feet to miles
+               if (d > movementThreshold) { 
+                   distance += d;
 
-            // Ignore small jumps less than ~10 feet (~3 meters)
-            const movementThreshold = (10 / 5280); // Convert feet to miles
-            if (d > movementThreshold && gpsSignalGood) { 
-                distance += d;
+                   distanceElement.textContent = distance.toFixed(2);
+               }
+           }
 
-                // Only calculate elevation gain if the user has moved significantly
-                if (altitude && Math.abs(altitude - previousPosition.altitude) > 10) {
-                    const elevationChange = altitude - previousPosition.altitude;
-
-                    if (elevationChange > 0) { // Only count upward movement as gain
-                        elevationGain += elevationChange;
-                    }
-                }
-            }
-
-            distanceElement.textContent = distance.toFixed(2);
-            elevationElement.textContent = Math.round(elevationGain);
-        }
-
-        previousPosition = { latitude, longitude, altitude };
-    },
-    (error) => {
-        alert("Error getting location. Please ensure location services are enabled.");
-    },
-    { enableHighAccuracy: true }
-);
+           previousPosition = { latitude, longitude };
+       },
+       (error) => {
+           alert("Error getting location. Please ensure location services are enabled.");
+       },
+       { enableHighAccuracy: true }
+   );
 }
 
-// Function to stop tracking and save data as a text file
+// Function to stop tracking and show summary
 function stopTracking() {
-clearInterval(timerInterval);
-navigator.geolocation.clearWatch(watchId);
+   clearInterval(timerInterval);
+   navigator.geolocation.clearWatch(watchId);
 
-trackingIndicator.classList.add("hidden"); // Hide flashing "Tracking..." text
+   trackingIndicator.classList.add("hidden"); // Hide flashing "Tracking..." text
 
-startButton.classList.remove("hidden");
-stopButton.classList.add("hidden");
+   startButton.classList.remove("hidden");
+   stopButton.classList.add("hidden");
 
-// Ask user if they want to save the run data
-if (confirm("Do you want to save this run?")) {
-saveRunData();
+   // Show summary section with results
+   summaryStartTime.textContent = `Start Time: ${startTime.toLocaleString()}`;
+   summaryDistance.textContent = `Distance: ${distance.toFixed(2)} miles`;
+   summaryDuration.textContent = `Duration: ${formatTime((new Date() - startTime) / 1000)}`;
+   
+   summarySection.style.display = 'block'; // Show the summary section
 }
-}
 
-// Function to save run data as a text file
-function saveRunData() {
-const duration=formatTime((new Date()-startTime)/1000);
-const data=`Run Summary:
-Start Time:${startTime.toLocaleString()}
-Distance:${distance.toFixed(2)} miles
-Duration:${duration}
-Elevation Gain:${elevationGain} ft`;
+// Function to reset the app state for a new run
+function resetApp() {
+   distance = 0;
+   previousPosition = null;
 
-// Create a Blob from the data and trigger download
-const blob=new Blob([data],{type:"text/plain"});
-const url=URL.createObjectURL(blob);
-const a=document.createElement("a");
-a.href=url;
-a.download=`Run_${new Date().toISOString().slice(0,10)}.txt`; // Name of the downloaded file
-document.body.appendChild(a);
-a.click(); // Trigger download
-document.body.removeChild(a); // Clean up
-URL.revokeObjectURL(url); // Free up memory
+   distanceElement.textContent = '0.00';
+   timeElement.textContent = '00:00';
+   startInfo.classList.add('hidden'); // Hide start info
+
+   summarySection.style.display = 'none'; // Hide the summary section
+
+   startButton.classList.remove("hidden"); // Show Start button again
 }
 
 // Function to update elapsed time
 function updateTime() {
-const currentTime=new Date();
-const elapsedSeconds=Math.floor((currentTime-startTime)/1000);
-const minutes=Math.floor(elapsedSeconds/60).toString().padStart(2,"0");
-const seconds=(elapsedSeconds%60).toString().padStart(2,"0");
-timeElement.textContent=`${minutes}:${seconds}`;
+   const currentTime=new Date();
+   const elapsedSeconds=Math.floor((currentTime-startTime)/1000);
+   const minutes=Math.floor(elapsedSeconds/60).toString().padStart(2,"0");
+   const seconds=(elapsedSeconds%60).toString().padStart(2,"0");
+   
+   timeElement.textContent=`${minutes}:${seconds}`;
 }
 
 // Calculate advanced distance with elevation and turn corrections
-function calculateAdvancedDistance(lat1,lon1,ele1,lat2,lon2,ele2){
-const R=3958.8; // Radius of Earth in miles
-const dLat=degreesToRadians(lat2-lat1);
-const dLon=degreesToRadians(lon2-lon1);
-const a=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(degreesToRadians(lat1))*Math.cos(degreesToRadians(lat2))*Math.sin(dLon/2)*Math.sin(dLon/2);
-const c=2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
-const horizontalDistance=R*c;
-const elevationChange=(ele2-ele1)/5280; // Convert feet to miles
-return Math.sqrt(horizontalDistance**2+elevationChange**2);
+function calculateAdvancedDistance(lat1, lon1, lat2, lon2) {
+   const R=3958.8; // Radius of Earth in miles
+   const dLat=degreesToRadians(lat2-lat1);
+   const dLon=degreesToRadians(lon2-lon1);
+   
+   const a=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(degreesToRadians(lat1))*Math.cos(degreesToRadians(lat2))*Math.sin(dLon/2)*Math.sin(dLon/2);
+   
+   const c=2*Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+   
+   return R * c; // Return distance in miles
 }
 
 // Helper function to convert degrees to radians
-function degreesToRadians(degrees) {return degrees*(Math.PI/180);}
+function degreesToRadians(degrees) { return degrees * (Math.PI / 180); }
 
 // Helper function to format time in mm:ss format
 function formatTime(totalSeconds) {
-const minutes=Math.floor(totalSeconds/60).toString().padStart(2,"0");
-const seconds=(totalSeconds%60).toString().padStart(2,"0");
-return `${minutes}:${seconds}`;
+   const minutes=Math.floor(totalSeconds/60).toString().padStart(2,"0");
+   const seconds=(totalSeconds%60).toString().padStart(2,"0");
+   
+   return `${minutes}:${seconds}`;
 }
 </script>
 </body>
