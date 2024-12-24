@@ -18,8 +18,8 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      background-color: #007bff; /* Full-screen blue background */
-      color: white;
+      background-color: black; /* Black background */
+      color: white; /* White text for readability */
     }
 
     .container {
@@ -27,11 +27,11 @@
       max-width: 400px;
       text-align: center;
       padding: 20px;
-      border-radius: 10px;
     }
 
     h1 {
       font-size: 2rem;
+      color: white; /* White title */
     }
 
     .stats {
@@ -45,15 +45,15 @@
       margin-top: 20px;
       padding: 10px 20px; /* Standard button size */
       font-size: 1rem; /* Standard font size */
-      color: white;
-      background-color: #0056b3; /* Darker blue for buttons */
+      color: black; /* Black text for contrast */
+      background-color: white; /* White button */
       border-radius: 10px;
       border: none;
       cursor: pointer;
     }
 
     .button:hover {
-      background-color: #003f8a; /* Even darker blue on hover */
+      background-color: #f0f0f0; /* Light gray hover effect */
     }
 
     .hidden {
@@ -62,7 +62,7 @@
   </style>
 </head>
 <body>
-<div class="container" id="tracker">
+<div class="container">
   <h1>Run Tracker</h1>
 
   <p id="status">Click "Start" to begin tracking your run.</p>
@@ -75,8 +75,6 @@
 
   <button id="startButton" class="button">Start</button>
   <button id="stopButton" class="button hidden">Stop</button>
-  <button id="saveTextButton" class="button hidden">Save as Text</button>
-  <button id="saveImageButton" class="button hidden">Save as Image</button>
 </div>
 
 <script>
@@ -91,8 +89,6 @@ let timerInterval = null; // Interval for updating time
 const statusElement = document.getElementById("status");
 const startButton = document.getElementById("startButton");
 const stopButton = document.getElementById("stopButton");
-const saveTextButton = document.getElementById("saveTextButton");
-const saveImageButton = document.getElementById("saveImageButton");
 const distanceElement = document.getElementById("distance");
 const timeElement = document.getElementById("time");
 const elevationElement = document.getElementById("elevation");
@@ -112,47 +108,66 @@ stopButton.addEventListener("click", () => {
   stopTracking();
 });
 
-// Save results as text
-saveTextButton.addEventListener("click", () => {
-  const duration = formatTime((new Date() - startTime) / 1000);
-
-const data=`Run Summary:
-Distance:${distance.toFixed(2)}miles
-Duration:${duration}
-Elevation Gain:${elevationGain}ft`;
-
-const blob=new Blob([data],{type:"text/plain"});
-const url=URL.createObjectURL(blob);
-const a=document.createElement("a");a.href=url;a.download="run_results.txt";a.click();URL.revokeObjectURL(url);});
-
-// Save screen as image
-saveImageButton.addEventListener("click", () => {
-const tracker=document.getElementById("tracker");html2canvas(tracker).then((canvas)=>{const link=document.createElement("a");link.download="run_tracker.png";link.href=canvas.toDataURL();link.click();});});
-
 // Function to start tracking
 function startTracking() {
-startTime=new Date();distance=0;elevationGain=0;previousPosition=null;
+  startTime = new Date();
+  distance = 0;
+  elevationGain = 0;
+  previousPosition = null;
 
-statusElement.textContent="Tracking your run...";
-startButton.classList.add("hidden");
-stopButton.classList.remove("hidden");
-saveTextButton.classList.add("hidden");
-saveImageButton.classList.add("hidden");
+  statusElement.textContent = "Tracking your run...";
+  
+  startButton.classList.add("hidden");
+  stopButton.classList.remove("hidden");
 
-timerInterval=setInterval(updateTime,1000);
+  timerInterval = setInterval(updateTime, 1000);
 
-watchId=navigator.geolocation.watchPosition((position)=>{const{latitude,longitude,altitude}=position.coords;if(previousPosition){const d=calculateAdvancedDistance(previousPosition.latitude,previousPosition.longitude,previousPosition.altitude||0,latitude,longitude,altitude||0);if(d>0.01){distance+=d;}if(altitude&&altitude>(previousPosition.altitude||0)){elevationGain+=(altitude-(previousPosition.altitude||0));}distanceElement.textContent=distance.toFixed(2);elevationElement.textContent=Math.round(elevationGain);}
+  watchId = navigator.geolocation.watchPosition(
+    (position) => {
+      const { latitude, longitude, altitude } = position.coords;
 
-previousPosition={latitude,longitude,altitude};},(error)=>{alert("Error getting location. Please ensure location services are enabled.");},{enableHighAccuracy:true});}
+      if (previousPosition) {
+        const d = calculateAdvancedDistance(
+          previousPosition.latitude,
+          previousPosition.longitude,
+          previousPosition.altitude || 0,
+          latitude,
+          longitude,
+          altitude || 0
+        );
+
+        // Ignore small jumps less than ~50 feet (~0.01 miles)
+        if (d > 0.01) {
+          distance += d;
+        }
+
+        // Update elevation gain if altitude increases
+        if (altitude && altitude > (previousPosition.altitude || 0)) {
+          elevationGain += altitude - (previousPosition.altitude || 0);
+        }
+
+        distanceElement.textContent = distance.toFixed(2);
+        elevationElement.textContent = Math.round(elevationGain);
+      }
+
+      previousPosition = { latitude, longitude, altitude };
+    },
+    (error) => {
+      alert("Error getting location. Please ensure location services are enabled.");
+    },
+    { enableHighAccuracy: true }
+  );
+}
 
 // Function to stop tracking
-function stopTracking() {clearInterval(timerInterval);navigator.geolocation.clearWatch(watchId);
+function stopTracking() {
+  clearInterval(timerInterval);
+  
+navigator.geolocation.clearWatch(watchId);
 
 statusElement.textContent="Run stopped.";
 startButton.classList.remove("hidden");
-stopButton.classList.add("hidden");
-saveTextButton.classList.remove("hidden");
-saveImageButton.classList.remove("hidden");}
+stopButton.classList.add("hidden");}
 
 // Function to update elapsed time
 function updateTime() {const currentTime=new Date();const elapsedSeconds=Math.floor((currentTime-startTime)/1000);const minutes=Math.floor(elapsedSeconds/60).toString().padStart(2,"0");const seconds=(elapsedSeconds%60).toString().padStart(2,"0");timeElement.textContent=`${minutes}:${seconds}`;}
@@ -163,6 +178,5 @@ function calculateAdvancedDistance(lat1,lon1,ele1,lat2,lon2,ele2){const R=3958.8
 // Helper function to convert degrees to radians
 function degreesToRadians(degrees) {return degrees*(Math.PI/180);}
 </script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </body>
 </html>
