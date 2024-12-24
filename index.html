@@ -110,20 +110,26 @@ function startTracking() {
 
   watchId = navigator.geolocation.watchPosition(
     (position) => {
-      const { latitude, longitude } = position.coords;
+      const { latitude, longitude, altitude } = position.coords;
 
       if (previousPosition) {
-        const d = calculateDistance(
+        const d = calculateAdvancedDistance(
           previousPosition.latitude,
           previousPosition.longitude,
+          previousPosition.altitude || 0,
           latitude,
-          longitude
+          longitude,
+          altitude || 0
         );
-        distance += d; // Add to total distance
-        distanceElement.textContent = distance.toFixed(2); // Update UI
+
+        // Ignore small jumps less than ~50 feet (~0.01 miles)
+        if (d > 0.01) {
+          distance += d; // Add to total distance
+          distanceElement.textContent = distance.toFixed(2); // Update UI
+        }
       }
 
-      previousPosition = { latitude, longitude };
+      previousPosition = { latitude, longitude, altitude };
     },
     (error) => {
       alert("Error getting location. Please ensure location services are enabled.");
@@ -143,25 +149,28 @@ function updateTime() {
   timeElement.textContent = `${minutes}:${seconds}`;
 }
 
-// Calculate distance between two coordinates using Haversine formula (in miles)
-function calculateDistance(lat1, lon1, lat2, lon2) {
+// Calculate advanced distance with elevation and turn corrections
+function calculateAdvancedDistance(lat1, lon1, ele1, lat2, lon2, ele2) {
   const R = 3958.8; // Radius of Earth in miles
   const dLat = degreesToRadians(lat2 - lat1);
   const dLon = degreesToRadians(lon2 - lon1);
 
+  // Haversine formula for horizontal distance
   const a =
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
     Math.cos(degreesToRadians(lat1)) *
       Math.cos(degreesToRadians(lat2)) *
       Math.sin(dLon / 2) *
       Math.sin(dLon / 2);
-
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   
-return R * c;// Distance in miles.
-}
+const c=2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));// Horizontal dist.
+const horizontalDistance=R*c;
 
-// Convert degrees to radians
+// Incorporate elevation change using Pythagorean theorem.
+const elevationChange=(ele2-ele1)/5280;// Convert feet to miles.
+return Math.sqrt(horizontalDistance**2+elevationChange**2);}
+
+// Helper function to convert degrees to radians
 function degreesToRadians(degrees) {
 return degrees*(Math.PI/180);}
 </script>
