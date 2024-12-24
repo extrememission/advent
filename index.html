@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Run Tracker</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <style>
-    /* Ensure full-screen background */
     html, body {
       margin: 0;
       padding: 0;
@@ -31,7 +31,6 @@
 
     h1 {
       font-size: 2rem;
-      color: white; /* White title */
     }
 
     .stats {
@@ -76,7 +75,7 @@
   </style>
 </head>
 <body>
-<div class="container">
+<div class="container" id="tracker">
   <h1>Run Tracker</h1>
 
   <p id="trackingIndicator" class="tracking-text hidden">Tracking...</p>
@@ -177,7 +176,7 @@ function startTracking() {
   );
 }
 
-// Function to stop tracking
+// Function to stop tracking and generate an image
 function stopTracking() {
 clearInterval(timerInterval);
 navigator.geolocation.clearWatch(watchId);
@@ -187,20 +186,11 @@ trackingIndicator.classList.add("hidden"); // Hide flashing "Tracking..." text
 startButton.classList.remove("hidden");
 stopButton.classList.add("hidden");
 
-// Ask user if they want to save the run
-if (confirm("Do you want to save this run?")) {
-saveRunData();}
-}
+// Generate an image of the tracker and share it
+html2canvas(document.getElementById('tracker')).then(canvas => {
+const imageData=canvas.toDataURL('image/png');
 
-// Function to save run data as a text file
-function saveRunData() {const duration=formatTime((new Date()-startTime)/1000);const data=`Run Summary:
-Distance:${distance.toFixed(2)}miles
-Duration:${duration}
-Elevation Gain:${elevationGain}ft`;
-
-const blob=new Blob([data],{type:"text/plain"});
-const url=URL.createObjectURL(blob);
-const a=document.createElement("a");a.href=url;a.download=`Run_${new Date().toISOString().slice(0,10)}.txt`;document.body.appendChild(a);a.style.display='none';a.click();document.body.removeChild(a);URL.revokeObjectURL(url);}
+if(navigator.share){navigator.share({title:"Run Summary",text:"Check out my run!",files:[new File([imageData],'run.png',{type:'image/png'})]}).catch(err=>alert(`Error sharing:${err}`));}else{alert("Sharing is not supported on this device.");}});}
 
 // Function to update elapsed time
 function updateTime() {const currentTime=new Date();const elapsedSeconds=Math.floor((currentTime-startTime)/1000);const minutes=Math.floor(elapsedSeconds/60).toString().padStart(2,"0");const seconds=(elapsedSeconds%60).toString().padStart(2,"0");timeElement.textContent=`${minutes}:${seconds}`;}
