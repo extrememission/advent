@@ -186,7 +186,21 @@ trackingIndicator.classList.add("hidden"); // Hide flashing "Tracking..." text
 
 startButton.classList.remove("hidden");
 stopButton.classList.add("hidden");
+
+// Ask user if they want to save the run
+if (confirm("Do you want to save this run?")) {
+saveRunData();}
 }
+
+// Function to save run data as a text file
+function saveRunData() {const duration=formatTime((new Date()-startTime)/1000);const data=`Run Summary:
+Distance:${distance.toFixed(2)}miles
+Duration:${duration}
+Elevation Gain:${elevationGain}ft`;
+
+const blob=new Blob([data],{type:"text/plain"});
+const url=URL.createObjectURL(blob);
+const a=document.createElement("a");a.href=url;a.download="run_results.txt";a.click();URL.revokeObjectURL(url);}
 
 // Function to update elapsed time
 function updateTime() {const currentTime=new Date();const elapsedSeconds=Math.floor((currentTime-startTime)/1000);const minutes=Math.floor(elapsedSeconds/60).toString().padStart(2,"0");const seconds=(elapsedSeconds%60).toString().padStart(2,"0");timeElement.textContent=`${minutes}:${seconds}`;}
