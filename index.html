@@ -42,8 +42,8 @@
     .button {
       display: inline-block;
       margin-top: 20px;
-      padding: 15px 30px;
-      font-size: 1.5rem; /* Larger button for easier tapping */
+      padding: 10px 20px; /* Smaller button size */
+      font-size: 1rem; /* Smaller font size */
       color: #007bff;
       background-color: white;
       border-radius: 10px;
@@ -102,7 +102,7 @@ startButton.addEventListener("click", () => {
   distance = 0; // Reset distance
   previousPosition = null; // Reset previous position
 
-  statusElement.textContent = "Tracking your run...";
+  statusElement.textContent = "Running..."; // Update status text
   
   startButton.classList.add("hidden");
   stopButton.classList.remove("hidden");
