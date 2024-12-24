@@ -158,8 +158,9 @@ watchId = navigator.geolocation.watchPosition(
                 altitude || previousPosition.altitude || 0
             );
 
-            // Ignore small jumps less than ~50 feet (~0.01 miles)
-            if (d > 0.01) {
+            // Ignore small jumps less than ~10 feet (~3 meters)
+            const movementThreshold = 10 / 5280; // Convert feet to miles
+            if (d > movementThreshold) { 
                 distance += d;
 
                 // Only calculate elevation gain if the user has moved significantly
@@ -199,22 +200,15 @@ stopButton.classList.add("hidden");
 html2canvas(document.getElementById('tracker')).then(canvas => {
 const imageData=canvas.toDataURL('image/png');
 
-// Use navigator.share to share the image
-if(navigator.share){ 
-navigator.share({
-title:"Run Summary",
-text:"Check out my run!",
-files:[new File([imageData], 'run.png', { type:'image/png' })]
-}).then(() => {
-resetApp(); // Reset app after sharing
-}).catch((err) => {
-alert(`Error sharing:${err}`);
-resetApp(); // Reset app even if sharing fails
-});
-} else {
-alert("Sharing is not supported on this device.");
-resetApp(); // Reset app if sharing is not supported
-}
+// Create a downloadable link for the image
+const link = document.createElement('a');
+link.href = imageData;
+link.download = 'run_summary.png'; // Name of the downloaded file
+document.body.appendChild(link);
+link.click(); // Trigger download
+document.body.removeChild(link); // Clean up
+
+resetApp(); // Reset app after generating the image
 });
 }
 
