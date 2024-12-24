@@ -69,8 +69,8 @@
 
     .button {
       display: inline-block;
-      margin-top: 20px;
-      padding: 10px 20px; /* Standard button size */
+      margin-top: 20px; /* Standard button size */
+      padding: 10px 20px; 
       font-size: 1rem; /* Standard font size */
       color: black; /* Black text for contrast */
       background-color: white; /* White button */
@@ -117,8 +117,7 @@
 <div class="container">
   <h1>Run Tracker</h1>
 
-  <p id="trackingIndicator" class="tracking-text hidden">Tracking...</p>
-  
+   <button id="getGpsButton" class="button">Get GPS Signal</button> <!-- Only one GPS button -->
    <div class="gps-indicator" id="gpsIndicator"></div>
    <span id="gpsStatus" class="gps-status">Checking GPS...</span>
 
@@ -133,18 +132,9 @@
      
    </div>
 
-   <button id="getGpsButton" class="button">Start GPS</button>
    <button id="startButton" class="button hidden">Start Run</button>
    <button id="stopButton" class="button hidden">Stop Run</button>
 
-   <!-- Summary section -->
-   <div class="summary" id="summary">
-     <h2>Run Summary</h2>
-     <p id="summaryStartTime"></p>
-     <p id="summaryDistance"></p>
-     <p id="summaryDuration"></p>
-     <button id="newRunButton" class="button">Start New Run</button>
-   </div>
 </div>
 
 <script>
@@ -163,11 +153,6 @@ const stopButton = document.getElementById("stopButton");
 const distanceElement = document.getElementById("distance");
 const timeElement = document.getElementById("time");
 const startInfo = document.getElementById("startInfo");
-const summarySection = document.getElementById("summary");
-const summaryStartTime = document.getElementById("summaryStartTime");
-const summaryDistance = document.getElementById("summaryDistance");
-const summaryDuration = document.getElementById("summaryDuration");
-const newRunButton = document.getElementById("newRunButton");
 const gpsIndicator = document.getElementById("gpsIndicator");
 const gpsStatus = document.getElementById("gpsStatus");
 
@@ -210,33 +195,14 @@ function watchPosition() {
                gpsStatus.textContent = "Very Poor GPS Signal";
            }
 
-           if (previousPosition) {
-               const d = calculateAdvancedDistance(
-                   previousPosition.latitude,
-                   previousPosition.longitude,
-                   latitude,
-                   longitude
-               );
-
-               // Ignore small jumps less than ~10 feet (~3 meters)
-               const movementThreshold = (10 / 5280); // Convert feet to miles
-               if (d > movementThreshold && gpsSignalGood) { 
-                   distance += d;
-
-                   distanceElement.textContent = distance.toFixed(2);
-               }
-           }
-
-           previousPosition = { latitude, longitude };
+           startButton.classList.remove("hidden"); // Show Start Run button after getting GPS signal.
        },
        (error) => {
            alert("Error getting location. Please ensure location services are enabled.");
        },
        { enableHighAccuracy: true }
    );
-
-   startButton.classList.remove("hidden"); // Show Start Run button after getting GPS signal.
-};
+}
 
 // Function to start tracking 
 function startTracking() {
@@ -264,6 +230,7 @@ function stopTracking() {
 
    trackingIndicator.classList.add("hidden"); // Hide flashing "Tracking..." text
 
+   getGpsButton.classList.remove("hidden"); // Show Get GPS Signal button again.
    startButton.classList.remove("hidden");
    stopButton.classList.add("hidden");
 
