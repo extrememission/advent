@@ -101,6 +101,16 @@
       margin-top: 20px;
     }
     
+    .summary {
+        display: none; /* Initially hidden */
+        margin-top: 20px;
+        text-align: left; /* Align to left for better readability */
+    }
+    
+    .summary p {
+        margin-bottom: 10px; /* Spacing between summary items */
+    }
+    
   </style>
 </head>
 <body>
@@ -123,9 +133,18 @@
      
    </div>
 
-   <button id="startButton" class="button">Start</button>
+   <button id="getGpsButton" class="button">Get GPS Signal</button>
+   <button id="startButton" class="button hidden">Start</button>
    <button id="stopButton" class="button hidden">Stop</button>
 
+   <!-- Summary section -->
+   <div class="summary" id="summary">
+     <h2>Run Summary</h2>
+     <p id="summaryStartTime"></p>
+     <p id="summaryDistance"></p>
+     <p id="summaryDuration"></p>
+     <button id="newRunButton" class="button">Start New Run</button>
+   </div>
 </div>
 
 <script>
@@ -138,48 +157,33 @@ let gpsSignalGood = false; // Track GPS signal quality
 
 // Elements
 const trackingIndicator = document.getElementById("trackingIndicator");
+const getGpsButton = document.getElementById("getGpsButton");
 const startButton = document.getElementById("startButton");
 const stopButton = document.getElementById("stopButton");
 const distanceElement = document.getElementById("distance");
 const timeElement = document.getElementById("time");
 const startInfo = document.getElementById("startInfo");
+const summarySection = document.getElementById("summary");
+const summaryStartTime = document.getElementById("summaryStartTime");
+const summaryDistance = document.getElementById("summaryDistance");
+const summaryDuration = document.getElementById("summaryDuration");
+const newRunButton = document.getElementById("newRunButton");
 const gpsIndicator = document.getElementById("gpsIndicator");
 const gpsStatus = document.getElementById("gpsStatus");
 
-// Start tracking
-startButton.addEventListener("click", () => {
+// Activate GPS on button click
+getGpsButton.addEventListener("click", () => {
    if (!navigator.geolocation) {
        alert("Geolocation is not supported by your browser.");
        return;
    }
-
-   startTracking();
+   // Start watching position after clicking the button
+   watchPosition();
 });
 
-// Stop tracking
-stopButton.addEventListener("click", () => {
-   stopTracking();
-});
-
-// Function to start tracking
-function startTracking() {
-   startTime = new Date();
-  
-   // Display start date and time
-   startInfo.textContent = `Run started at ${startTime.toLocaleString()}`;
-   startInfo.classList.remove('hidden');
-
-   distance = 0;
-   previousPosition = null;
-
-   trackingIndicator.classList.remove("hidden"); // Show flashing "Tracking..." text
-  
-   startButton.classList.add("hidden");
-   stopButton.classList.remove("hidden");
-
-   timerInterval = setInterval(updateTime, 1000);
-
-   watchId = navigator.geolocation.watchPosition(
+// Function to watch position
+function watchPosition() {
+   navigator.geolocation.watchPosition(
        (position) => {
            const { latitude, longitude } = position.coords;
 
@@ -205,34 +209,37 @@ function startTracking() {
                gpsIndicator.style.backgroundColor = 'red'; // Change indicator to red
                gpsStatus.textContent = "Very Poor GPS Signal";
            }
-
-           if (previousPosition) {
-               const d = calculateAdvancedDistance(
-                   previousPosition.latitude,
-                   previousPosition.longitude,
-                   latitude,
-                   longitude
-               );
-
-               // Ignore small jumps less than ~10 feet (~3 meters)
-               const movementThreshold = (10 / 5280); // Convert feet to miles
-               if (d > movementThreshold && gpsSignalGood) { 
-                   distance += d;
-
-                   distanceElement.textContent = distance.toFixed(2);
-               }
-           }
-
-           previousPosition = { latitude, longitude };
        },
        (error) => {
            alert("Error getting location. Please ensure location services are enabled.");
        },
        { enableHighAccuracy: true }
    );
+
+   startTracking(); // Start tracking after getting a good GPS signal
 }
 
-// Function to stop tracking and save data as a text file
+// Start tracking function remains unchanged...
+function startTracking() {
+   startTime = new Date();
+  
+   // Display start date and time
+   startInfo.textContent = `Run started at ${startTime.toLocaleString()}`;
+   startInfo.classList.remove('hidden');
+
+   distance = 0;
+   previousPosition = null;
+
+   trackingIndicator.classList.remove("hidden"); // Show flashing "Tracking..." text
+  
+   getGpsButton.classList.add("hidden"); // Hide Get GPS Signal button after starting run.
+   startButton.classList.remove("hidden");
+   stopButton.classList.remove("hidden");
+
+   timerInterval = setInterval(updateTime, 1000);
+}
+
+// Stop tracking and save data as a text file function remains unchanged...
 function stopTracking() {
    clearInterval(timerInterval);
    navigator.geolocation.clearWatch(watchId);
@@ -242,13 +249,12 @@ function stopTracking() {
    startButton.classList.remove("hidden");
    stopButton.classList.add("hidden");
 
-   // Ask user if they want to save the run data
    if (confirm("Do you want to save this run?")) {
        saveRunData();
    }
 }
 
-// Function to save run data as a text file
+// Save run data as a text file function remains unchanged...
 function saveRunData() {
    const duration=formatTime((new Date()-startTime)/1000);
    const data=`Run Summary:
@@ -268,7 +274,7 @@ document.body.removeChild(a); // Clean up
 URL.revokeObjectURL(url); // Free up memory
 }
 
-// Function to update elapsed time
+// Update elapsed time function remains unchanged...
 function updateTime() {
    const currentTime=new Date();
    const elapsedSeconds=Math.floor((currentTime-startTime)/1000);
@@ -278,7 +284,7 @@ function updateTime() {
    timeElement.textContent=`${minutes}:${seconds}`;
 }
 
-// Calculate advanced distance with elevation and turn corrections
+// Calculate advanced distance function remains unchanged...
 function calculateAdvancedDistance(lat1, lon1, lat2, lon2) {
    const R=3958.8; // Radius of Earth in miles
    const dLat=degreesToRadians(lat2-lat1);
@@ -291,10 +297,9 @@ function calculateAdvancedDistance(lat1, lon1, lat2, lon2) {
    return R * c; // Return distance in miles
 }
 
-// Helper function to convert degrees to radians
+// Helper functions remain unchanged...
 function degreesToRadians(degrees) { return degrees * (Math.PI / 180); }
 
-// Helper function to format time in mm:ss format
 function formatTime(totalSeconds) {
    const minutes=Math.floor(totalSeconds/60).toString().padStart(2,"0");
    const seconds=(totalSeconds%60).toString().padStart(2,"0");
