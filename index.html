@@ -69,8 +69,9 @@
     .tracking-text {
       animation: pulse 1.5s infinite;
       color: #00ff00; /* Bright green for visibility */
+      font-size: 2rem; /* Larger for prominence */
       font-weight: bold;
-      margin-top: 10px;
+      margin-top: 20px;
     }
   </style>
 </head>
@@ -78,7 +79,6 @@
 <div class="container">
   <h1>Run Tracker</h1>
 
-  <p id="status">Click "Start" to begin tracking your run.</p>
   <p id="trackingIndicator" class="tracking-text hidden">Tracking...</p>
 
   <div class="stats">
@@ -100,10 +100,9 @@ let previousPosition = null; // Last recorded position
 let timerInterval = null; // Interval for updating time
 
 // Elements
-const statusElement = document.getElementById("status");
+const trackingIndicator = document.getElementById("trackingIndicator");
 const startButton = document.getElementById("startButton");
 const stopButton = document.getElementById("stopButton");
-const trackingIndicator = document.getElementById("trackingIndicator");
 const distanceElement = document.getElementById("distance");
 const timeElement = document.getElementById("time");
 const elevationElement = document.getElementById("elevation");
@@ -130,12 +129,10 @@ function startTracking() {
   elevationGain = 0;
   previousPosition = null;
 
-  statusElement.textContent = "Tracking your run...";
+  trackingIndicator.classList.remove("hidden"); // Show flashing "Tracking..." text
   
   startButton.classList.add("hidden");
   stopButton.classList.remove("hidden");
-  
-  trackingIndicator.classList.remove("hidden"); // Show flashing "Tracking..." text
 
   timerInterval = setInterval(updateTime, 1000);
 
@@ -178,14 +175,14 @@ function startTracking() {
 
 // Function to stop tracking
 function stopTracking() {
-  clearInterval(timerInterval);
-  
+clearInterval(timerInterval);
 navigator.geolocation.clearWatch(watchId);
 
-statusElement.textContent="Run stopped.";
+trackingIndicator.classList.add("hidden"); // Hide flashing "Tracking..." text
+
 startButton.classList.remove("hidden");
 stopButton.classList.add("hidden");
-trackingIndicator.classList.add("hidden");}
+}
 
 // Function to update elapsed time
 function updateTime() {const currentTime=new Date();const elapsedSeconds=Math.floor((currentTime-startTime)/1000);const minutes=Math.floor(elapsedSeconds/60).toString().padStart(2,"0");const seconds=(elapsedSeconds%60).toString().padStart(2,"0");timeElement.textContent=`${minutes}:${seconds}`;}
