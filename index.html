@@ -33,6 +33,31 @@
       font-size: 2rem;
     }
 
+    .gps-indicator {
+        width: 100px;
+        height: 20px;
+        background-color: red; /* Default to red */
+        margin-bottom: 10px; /* Space below the indicator */
+        position: relative; /* For needle positioning */
+        border-radius: 10px; /* Rounded corners */
+    }
+    
+    .gps-needle {
+        width: 5px;
+        height: 40px;
+        background-color: yellow; /* Needle color */
+        position: absolute;
+        bottom: -20px; /* Positioning below the indicator */
+        left: calc(50% - 2.5px); /* Center needle */
+        transform-origin: bottom; /* Rotate from the bottom */
+    }
+
+    .gps-status {
+        margin-top: -10px; /* Adjust position slightly */
+        font-size: small;
+        color: white;
+    }
+
     .stats {
       font-size: 1.5rem; /* Large enough for quick glances */
       font-weight: bold;
@@ -100,28 +125,33 @@
 
   <p id="trackingIndicator" class="tracking-text hidden">Tracking...</p>
   
-  <p id="startInfo" class="hidden"></p> <!-- New paragraph for start date and time -->
+  <div class="gps-indicator" id="gpsIndicator">
+     <div class="gps-needle" id="gpsNeedle"></div> <!-- Needle for the indicator -->
+   </div>
+   <span id="gpsStatus" class="gps-status">Checking GPS...</span>
 
-  <div class="stats">
-    <p class="stat-label"><strong>Distance:</strong></p>
-    <p id="distance" class="stat-value">0.00</p>
-    
-    <p class="stat-label"><strong>Time:</strong></p>
-    <p id="time" class="stat-value">00:00</p>
-    
-  </div>
+   <p id="startInfo" class="hidden"></p> <!-- New paragraph for start date and time -->
 
-  <button id="startButton" class="button">Start</button>
-  <button id="stopButton" class="button hidden">Stop</button>
+   <div class="stats">
+     <p class="stat-label"><strong>Distance:</strong></p>
+     <p id="distance" class="stat-value">0.00</p>
+     
+     <p class="stat-label"><strong>Time:</strong></p>
+     <p id="time" class="stat-value">00:00</p>
+     
+   </div>
 
-  <!-- Summary section -->
-  <div class="summary" id="summary">
-    <h2>Run Summary</h2>
-    <p id="summaryStartTime"></p>
-    <p id="summaryDistance"></p>
-    <p id="summaryDuration"></p>
-    <button id="newRunButton" class="button">Start New Run</button>
-  </div>
+   <button id="startButton" class="button">Start</button>
+   <button id="stopButton" class="button hidden">Stop</button>
+
+   <!-- Summary section -->
+   <div class="summary" id="summary">
+     <h2>Run Summary</h2>
+     <p id="summaryStartTime"></p>
+     <p id="summaryDistance"></p>
+     <p id="summaryDuration"></p>
+     <button id="newRunButton" class="button">Start New Run</button>
+   </div>
 </div>
 
 <script>
@@ -143,6 +173,9 @@ const summaryStartTime = document.getElementById("summaryStartTime");
 const summaryDistance = document.getElementById("summaryDistance");
 const summaryDuration = document.getElementById("summaryDuration");
 const newRunButton = document.getElementById("newRunButton");
+const gpsIndicator = document.getElementById("gpsIndicator");
+const gpsNeedle = document.getElementById("gpsNeedle");
+const gpsStatus = document.getElementById("gpsStatus");
 
 // Start tracking
 startButton.addEventListener("click", () => {
@@ -185,6 +218,29 @@ function startTracking() {
    watchId = navigator.geolocation.watchPosition(
        (position) => {
            const { latitude, longitude } = position.coords;
+
+           // Check GPS accuracy
+           if (position.coords.accuracy <= 10) { // Excellent signal
+               gpsIndicator.style.backgroundColor = 'green';
+               gpsNeedle.style.transform = 'rotate(0deg)';
+               gpsStatus.textContent = "GPS Signal Excellent";
+           } else if (position.coords.accuracy <= 20) { // Good signal
+               gpsIndicator.style.backgroundColor = 'lightgreen';
+               gpsNeedle.style.transform = 'rotate(45deg)';
+               gpsStatus.textContent = "GPS Signal Good";
+           } else if (position.coords.accuracy <= 30) { // Fair signal
+               gpsIndicator.style.backgroundColor = 'yellow';
+               gpsNeedle.style.transform = 'rotate(90deg)';
+               gpsStatus.textContent = "GPS Signal Fair";
+           } else if (position.coords.accuracy <= 50) { // Weak signal
+               gpsIndicator.style.backgroundColor = 'orange';
+               gpsNeedle.style.transform = 'rotate(135deg)';
+               gpsStatus.textContent = "GPS Signal Weak";
+           } else { // Very weak signal
+               gpsIndicator.style.backgroundColor = 'red';
+               gpsNeedle.style.transform = 'rotate(180deg)';
+               gpsStatus.textContent = "Very Poor GPS Signal";
+           }
 
            if (previousPosition) {
                const d = calculateAdvancedDistance(
@@ -242,6 +298,8 @@ function resetApp() {
    summarySection.style.display = 'none'; // Hide the summary section
 
    startButton.classList.remove("hidden"); // Show Start button again
+
+   gpsIndicator.style.backgroundColor = 'red'; // Reset GPS indicator to red
 }
 
 // Function to update elapsed time
