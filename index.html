@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Run Tracker</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <style>
     /* Ensure full-screen background */
     html, body {
@@ -76,7 +75,7 @@
   </style>
 </head>
 <body>
-<div class="container" id="tracker">
+<div class="container">
   <h1>Run Tracker</h1>
 
   <p id="trackingIndicator" class="tracking-text hidden">Tracking...</p>
@@ -186,7 +185,7 @@ watchId = navigator.geolocation.watchPosition(
 );
 }
 
-// Function to stop tracking and generate an image
+// Function to stop tracking and save data as a text file
 function stopTracking() {
 clearInterval(timerInterval);
 navigator.geolocation.clearWatch(watchId);
@@ -196,42 +195,62 @@ trackingIndicator.classList.add("hidden"); // Hide flashing "Tracking..." text
 startButton.classList.remove("hidden");
 stopButton.classList.add("hidden");
 
-// Generate an image of the tracker and share it
-html2canvas(document.getElementById('tracker')).then(canvas => {
-const imageData=canvas.toDataURL('image/png');
-
-// Create a downloadable link for the image
-const link = document.createElement('a');
-link.href = imageData;
-link.download = 'run_summary.png'; // Name of the downloaded file
-document.body.appendChild(link);
-link.click(); // Trigger download
-document.body.removeChild(link); // Clean up
-
-resetApp(); // Reset app after generating the image
-});
+// Ask user if they want to save the run data
+if (confirm("Do you want to save this run?")) {
+saveRunData();
+}
 }
 
-// Function to reset the app state after sharing or saving
-function resetApp() {
-distance = 0;
-elevationGain = 0;
-previousPosition = null;
+// Function to save run data as a text file
+function saveRunData() {
+const duration=formatTime((new Date()-startTime)/1000);
+const data=`Run Summary:
+Distance:${distance.toFixed(2)} miles
+Duration:${duration}
+Elevation Gain:${elevationGain} ft`;
 
-distanceElement.textContent = '0.00';
-elevationElement.textContent = '0';
-timeElement.textContent = '00:00';
-startInfo.classList.add('hidden'); // Hide start info
+// Create a Blob from the data and trigger download
+const blob=new Blob([data],{type:"text/plain"});
+const url=URL.createObjectURL(blob);
+const a=document.createElement("a");
+a.href=url;
+a.download=`Run_${new Date().toISOString().slice(0,10)}.txt`; // Name of the downloaded file
+document.body.appendChild(a);
+a.click(); // Trigger download
+document.body.removeChild(a); // Clean up
+URL.revokeObjectURL(url); // Free up memory
 }
 
 // Function to update elapsed time
-function updateTime() {const currentTime=new Date();const elapsedSeconds=Math.floor((currentTime-startTime)/1000);const minutes=Math.floor(elapsedSeconds/60).toString().padStart(2,"0");const seconds=(elapsedSeconds%60).toString().padStart(2,"0");timeElement.textContent=`${minutes}:${seconds}`;}
+function updateTime() {
+const currentTime=new Date();
+const elapsedSeconds=Math.floor((currentTime-startTime)/1000);
+const minutes=Math.floor(elapsedSeconds/60).toString().padStart(2,"0");
+const seconds=(elapsedSeconds%60).toString().padStart(2,"0");
+timeElement.textContent=`${minutes}:${seconds}`;
+}
 
 // Calculate advanced distance with elevation and turn corrections
-function calculateAdvancedDistance(lat1,lon1,ele1,lat2,lon2,ele2){const R=3958.8;const dLat=degreesToRadians(lat2-lat1);const dLon=degreesToRadians(lon2-lon1);const a=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(degreesToRadians(lat1))*Math.cos(degreesToRadians(lat2))*Math.sin(dLon/2)*Math.sin(dLon/2);const c=2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));const horizontalDistance=R*c;const elevationChange=(ele2-ele1)/5280;return Math.sqrt(horizontalDistance**2+elevationChange**2);}
+function calculateAdvancedDistance(lat1,lon1,ele1,lat2,lon2,ele2){
+const R=3958.8; // Radius of Earth in miles
+const dLat=degreesToRadians(lat2-lat1);
+const dLon=degreesToRadians(lon2-lon1);
+const a=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(degreesToRadians(lat1))*Math.cos(degreesToRadians(lat2))*Math.sin(dLon/2)*Math.sin(dLon/2);
+const c=2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+const horizontalDistance=R*c;
+const elevationChange=(ele2-ele1)/5280; // Convert feet to miles
+return Math.sqrt(horizontalDistance**2+elevationChange**2);
+}
 
 // Helper function to convert degrees to radians
 function degreesToRadians(degrees) {return degrees*(Math.PI/180);}
+
+// Helper function to format time in mm:ss format
+function formatTime(totalSeconds) {
+const minutes=Math.floor(totalSeconds/60).toString().padStart(2,"0");
+const seconds=(totalSeconds%60).toString().padStart(2,"0");
+return `${minutes}:${seconds}`;
+}
 </script>
 </body>
 </html>
