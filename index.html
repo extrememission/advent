@@ -159,7 +159,7 @@ watchId = navigator.geolocation.watchPosition(
             );
 
             // Ignore small jumps less than ~10 feet (~3 meters)
-            const movementThreshold = 10 / 5280; // Convert feet to miles
+            const movementThreshold = (10 / 5280); // Convert feet to miles
             if (d > movementThreshold) { 
                 distance += d;
 
