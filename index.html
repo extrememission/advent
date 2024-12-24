@@ -19,59 +19,61 @@
     }
 
     .container {
-      width: 90%;
-      max-width: 400px;
+      width: 100%;
+      height: 100%;
       text-align: center;
-      background-color: #fff;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      background-color: #007bff;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
     }
 
     h1 {
+      font-size: 2rem;
       margin-bottom: 20px;
+    }
+
+    .stats {
+      font-size: 3rem; /* Larger font size for quick glances */
+      font-weight: bold;
     }
 
     .button {
       display: inline-block;
-      margin-top: 10px;
-      padding: 10px 20px;
-      font-size: 16px;
-      color: #fff;
-      background-color: #007bff;
+      margin-top: 20px;
+      padding: 15px 30px;
+      font-size: 1.5rem; /* Larger button for easier tapping */
+      color: #007bff;
+      background-color: white;
+      border-radius: 10px;
       border: none;
-      border-radius: 5px;
       cursor: pointer;
     }
 
     .button:hover {
-      background-color: #0056b3;
+      background-color: #f0f0f0;
     }
 
-    .results {
-      margin-top: 20px;
-    }
-
-    .download-btn {
-      margin-top: 20px;
+    .hidden {
+      display: none !important; /* Utility class to hide elements */
     }
   </style>
 </head>
 <body>
 <div class="container">
-<h1>Run Tracker</h1>
+  <h1>Run Tracker</h1>
 
-<p id="status">Click "Start" to begin tracking your run.</p>
+  <p id="status">Click "Start" to begin tracking your run.</p>
 
-<button id="startButton" class="button">Start</button>
-<button id="stopButton" class="button" style="display:none;">Stop</button>
+  <div class="stats">
+    <p><strong>Distance:</strong> <span id="distance">0.00</span> miles</p>
+    <p><strong>Time:</strong> <span id="time">00:00</span></p>
+  </div>
 
-<div class="results">
-  <p><strong>Distance:</strong> <span id="distance">0</span> miles</p>
-  <p><strong>Time:</strong> <span id="time">00:00</span></p>
-</div>
-
-<button id="downloadButton" class="button download-btn" style="display:none;">Download Results</button>
+  <button id="startButton" class="button">Start</button>
+  <button id="stopButton" class="button hidden">Stop</button>
+  <button id="downloadButton" class="button hidden">Download Results</button>
 </div>
 
 <script>
@@ -79,14 +81,15 @@ let watchId = null; // ID for geolocation tracking
 let startTime = null; // Start time of the run
 let distance = 0; // Total distance in miles
 let previousPosition = null; // Last recorded position
+let timerInterval = null; // Interval for updating time
 
 // Elements
 const statusElement = document.getElementById("status");
 const startButton = document.getElementById("startButton");
 const stopButton = document.getElementById("stopButton");
+const downloadButton = document.getElementById("downloadButton");
 const distanceElement = document.getElementById("distance");
 const timeElement = document.getElementById("time");
-const downloadButton = document.getElementById("downloadButton");
 
 // Start tracking
 startButton.addEventListener("click", () => {
@@ -101,8 +104,10 @@ startButton.addEventListener("click", () => {
 
   statusElement.textContent = "Tracking your run...";
   
-  startButton.style.display = "none";
-  stopButton.style.display = "inline-block";
+  startButton.classList.add("hidden");
+  stopButton.classList.remove("hidden");
+
+  timerInterval = setInterval(updateTime, 1000); // Update time every second
 
   watchId = navigator.geolocation.watchPosition(
     (position) => {
@@ -120,8 +125,6 @@ startButton.addEventListener("click", () => {
       }
 
       previousPosition = { latitude, longitude };
-
-      updateTime(); // Update time elapsed
     },
     (error) => {
       alert("Error getting location. Please try again.");
@@ -136,11 +139,13 @@ stopButton.addEventListener("click", () => {
     navigator.geolocation.clearWatch(watchId);
     watchId = null;
 
+    clearInterval(timerInterval); // Stop updating time
+
     statusElement.textContent = "Run stopped.";
     
-    startButton.style.display = "inline-block";
-    stopButton.style.display = "none";
-    downloadButton.style.display = "inline-block"; // Show download button
+    startButton.classList.remove("hidden");
+    stopButton.classList.add("hidden");
+    downloadButton.classList.remove("hidden"); // Show download button
   }
 });
 
