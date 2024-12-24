@@ -133,9 +133,9 @@
      
    </div>
 
-   <button id="getGpsButton" class="button">Get GPS Signal</button>
-   <button id="startButton" class="button hidden">Start</button>
-   <button id="stopButton" class="button hidden">Stop</button>
+   <button id="getGpsButton" class="button">Start GPS</button>
+   <button id="startButton" class="button hidden">Start Run</button>
+   <button id="stopButton" class="button hidden">Stop Run</button>
 
    <!-- Summary section -->
    <div class="summary" id="summary">
@@ -209,6 +209,25 @@ function watchPosition() {
                gpsIndicator.style.backgroundColor = 'red'; // Change indicator to red
                gpsStatus.textContent = "Very Poor GPS Signal";
            }
+
+           if (previousPosition) {
+               const d = calculateAdvancedDistance(
+                   previousPosition.latitude,
+                   previousPosition.longitude,
+                   latitude,
+                   longitude
+               );
+
+               // Ignore small jumps less than ~10 feet (~3 meters)
+               const movementThreshold = (10 / 5280); // Convert feet to miles
+               if (d > movementThreshold && gpsSignalGood) { 
+                   distance += d;
+
+                   distanceElement.textContent = distance.toFixed(2);
+               }
+           }
+
+           previousPosition = { latitude, longitude };
        },
        (error) => {
            alert("Error getting location. Please ensure location services are enabled.");
@@ -216,10 +235,10 @@ function watchPosition() {
        { enableHighAccuracy: true }
    );
 
-   startTracking(); // Start tracking after getting a good GPS signal
-}
+   startButton.classList.remove("hidden"); // Show Start Run button after getting GPS signal.
+};
 
-// Start tracking function remains unchanged...
+// Function to start tracking 
 function startTracking() {
    startTime = new Date();
   
@@ -233,13 +252,12 @@ function startTracking() {
    trackingIndicator.classList.remove("hidden"); // Show flashing "Tracking..." text
   
    getGpsButton.classList.add("hidden"); // Hide Get GPS Signal button after starting run.
-   startButton.classList.remove("hidden");
    stopButton.classList.remove("hidden");
 
    timerInterval = setInterval(updateTime, 1000);
 }
 
-// Stop tracking and save data as a text file function remains unchanged...
+// Function to stop tracking and save data as a text file 
 function stopTracking() {
    clearInterval(timerInterval);
    navigator.geolocation.clearWatch(watchId);
@@ -249,12 +267,13 @@ function stopTracking() {
    startButton.classList.remove("hidden");
    stopButton.classList.add("hidden");
 
+   // Ask user if they want to save the run data 
    if (confirm("Do you want to save this run?")) {
        saveRunData();
    }
 }
 
-// Save run data as a text file function remains unchanged...
+// Function to save run data as a text file 
 function saveRunData() {
    const duration=formatTime((new Date()-startTime)/1000);
    const data=`Run Summary:
@@ -262,19 +281,19 @@ Start Time:${startTime.toLocaleString()}
 Distance:${distance.toFixed(2)} miles
 Duration:${duration}`;
 
-// Create a Blob from the data and trigger download
+// Create a Blob from the data and trigger download 
 const blob=new Blob([data],{type:"text/plain"});
 const url=URL.createObjectURL(blob);
 const a=document.createElement("a");
 a.href=url;
-a.download=`Run_${new Date().toISOString().slice(0,10)}.txt`; // Name of the downloaded file
+a.download=`Run_${new Date().toISOString().slice(0,10)}.txt`; // Name of the downloaded file 
 document.body.appendChild(a);
-a.click(); // Trigger download
-document.body.removeChild(a); // Clean up
-URL.revokeObjectURL(url); // Free up memory
+a.click(); // Trigger download 
+document.body.removeChild(a); // Clean up 
+URL.revokeObjectURL(url); // Free up memory 
 }
 
-// Update elapsed time function remains unchanged...
+// Function to update elapsed time 
 function updateTime() {
    const currentTime=new Date();
    const elapsedSeconds=Math.floor((currentTime-startTime)/1000);
@@ -286,15 +305,15 @@ function updateTime() {
 
 // Calculate advanced distance function remains unchanged...
 function calculateAdvancedDistance(lat1, lon1, lat2, lon2) {
-   const R=3958.8; // Radius of Earth in miles
-   const dLat=degreesToRadians(lat2-lat1);
+   const R=3958.8; // Radius of Earth in miles 
+   const dLat=degreesToRadians(lat2-lat1); 
    const dLon=degreesToRadians(lon2-lon1);
    
    const a=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(degreesToRadians(lat1))*Math.cos(degreesToRadians(lat2))*Math.sin(dLon/2)*Math.sin(dLon/2);
    
    const c=2*Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
    
-   return R * c; // Return distance in miles
+   return R * c; // Return distance in miles 
 }
 
 // Helper functions remain unchanged...
