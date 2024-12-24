@@ -55,11 +55,7 @@
     .download-btn {
       margin-top: 20px;
     }
-    
-    footer {
-        font-size:.8rem
-        margin-top:auto}
-</style>
+  </style>
 </head>
 <body>
 <div class="container">
@@ -71,7 +67,7 @@
 <button id="stopButton" class="button" style="display:none;">Stop</button>
 
 <div class="results">
-  <p><strong>Distance:</strong> <span id="distance">0</span> km</p>
+  <p><strong>Distance:</strong> <span id="distance">0</span> miles</p>
   <p><strong>Time:</strong> <span id="time">00:00</span></p>
 </div>
 
@@ -81,7 +77,7 @@
 <script>
 let watchId = null; // ID for geolocation tracking
 let startTime = null; // Start time of the run
-let distance = 0; // Total distance in kilometers
+let distance = 0; // Total distance in miles
 let previousPosition = null; // Last recorded position
 
 // Elements
@@ -155,8 +151,21 @@ downloadButton.addEventListener("click", () => {
 
   const data = `
 Run Summary:
-Distance: ${distance.toFixed(2)} km
+Distance: ${distance.toFixed(2)} miles
 Duration: ${duration}
 `;
 
-  const blob = new Blob([data], { type
+  const blob = new Blob([data], { type: "text/plain" });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "run_results.txt";
+  
+a.click();
+URL.revokeObjectURL(url);
+});
+
+// Calculate distance between two coordinates using Haversine formula (in miles)
+function calculateDistance(lat1, lon1, lat2, lon2) {
+const R=3958.8;// Radius of Earth in miles.
