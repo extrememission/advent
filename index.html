@@ -199,7 +199,24 @@ stopButton.classList.add("hidden");
 html2canvas(document.getElementById('tracker')).then(canvas => {
 const imageData=canvas.toDataURL('image/png');
 
-if(navigator.share){navigator.share({title:"Run Summary",text:"Check out my run!",files:[new File([imageData],'run.png',{type:'image/png'})]}).then(()=>{resetApp();}).catch((err)=>{alert(`Error sharing:${err}`);});}else{alert("Sharing is not supported on this device.");resetApp();}});}
+// Use navigator.share to share the image
+if(navigator.share){ 
+navigator.share({
+title:"Run Summary",
+text:"Check out my run!",
+files:[new File([imageData], 'run.png', { type:'image/png' })]
+}).then(() => {
+resetApp(); // Reset app after sharing
+}).catch((err) => {
+alert(`Error sharing:${err}`);
+resetApp(); // Reset app even if sharing fails
+});
+} else {
+alert("Sharing is not supported on this device.");
+resetApp(); // Reset app if sharing is not supported
+}
+});
+}
 
 // Function to reset the app state after sharing or saving
 function resetApp() {
