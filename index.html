@@ -59,6 +59,19 @@
     .hidden {
       display: none !important; /* Utility class to hide elements */
     }
+
+    @keyframes pulse {
+      0% { opacity: 0.5; }
+      50% { opacity: 1; }
+      100% { opacity: 0.5; }
+    }
+
+    .tracking-text {
+      animation: pulse 1.5s infinite;
+      color: #00ff00; /* Bright green for visibility */
+      font-weight: bold;
+      margin-top: 10px;
+    }
   </style>
 </head>
 <body>
@@ -66,6 +79,7 @@
   <h1>Run Tracker</h1>
 
   <p id="status">Click "Start" to begin tracking your run.</p>
+  <p id="trackingIndicator" class="tracking-text hidden">Tracking...</p>
 
   <div class="stats">
     <p><strong>Distance:</strong> <span id="distance">0.00</span> miles</p>
@@ -89,6 +103,7 @@ let timerInterval = null; // Interval for updating time
 const statusElement = document.getElementById("status");
 const startButton = document.getElementById("startButton");
 const stopButton = document.getElementById("stopButton");
+const trackingIndicator = document.getElementById("trackingIndicator");
 const distanceElement = document.getElementById("distance");
 const timeElement = document.getElementById("time");
 const elevationElement = document.getElementById("elevation");
@@ -119,6 +134,8 @@ function startTracking() {
   
   startButton.classList.add("hidden");
   stopButton.classList.remove("hidden");
+  
+  trackingIndicator.classList.remove("hidden"); // Show flashing "Tracking..." text
 
   timerInterval = setInterval(updateTime, 1000);
 
@@ -167,7 +184,8 @@ navigator.geolocation.clearWatch(watchId);
 
 statusElement.textContent="Run stopped.";
 startButton.classList.remove("hidden");
-stopButton.classList.add("hidden");}
+stopButton.classList.add("hidden");
+trackingIndicator.classList.add("hidden");}
 
 // Function to update elapsed time
 function updateTime() {const currentTime=new Date();const elapsedSeconds=Math.floor((currentTime-startTime)/1000);const minutes=Math.floor(elapsedSeconds/60).toString().padStart(2,"0");const seconds=(elapsedSeconds%60).toString().padStart(2,"0");timeElement.textContent=`${minutes}:${seconds}`;}
