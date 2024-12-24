@@ -1,190 +1,66 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Advent Calendar</title>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            background-image: url('bg.png'); /* Background image */
-            background-size: cover;
-            background-position: center center;
-            background-repeat: no-repeat;
-            background-attachment: fixed;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            text-align: center;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Run Tracker</title>
+  <style>
+    /* General Styles */
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f4f9;
+      color: #333;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
 
-        .calendar {
-            display: grid;
-            grid-template-columns: repeat(3, 100px);
-            gap: 10px;
-        }
+    h1 {
+      margin-bottom: 20px;
+    }
 
-        .door {
-            width: 100px;
-            height: 100px;
-            position: relative;
-            perspective: 1000px;
-        }
+    .container {
+      width: 90%;
+      max-width: 400px;
+      text-align: center;
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
 
-        .door-inner {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            transition: transform 0.6s;
-            transform-style: preserve-3d;
-        }
+    .button {
+      display: inline-block;
+      margin-top: 10px;
+      padding: 10px 20px;
+      font-size: 16px;
+      color: #fff;
+      background-color: #007bff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
 
-        .door.flipped .door-inner {
-            transform: rotateY(180deg);
-        }
+    .button:hover {
+      background-color: #0056b3;
+    }
 
-        .door-front, .door-back {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            backface-visibility: hidden;
-        }
+    .results {
+      margin-top: 20px;
+    }
 
-        .door-front {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-        }
-
-        .door-back {
-            transform: rotateY(180deg);
-            background-size: cover;
-            background-position: center center;
-        }
-
-        .door.disabled {
-            pointer-events: none;
-            opacity: 0.5;
-        }
-
-        /* Colors for the front squares */
-        .door:nth-child(1) .door-front {
-            background-color: red;
-        }
-
-        .door:nth-child(2) .door-front {
-            background-color: darkgreen;
-        }
-
-        .door:nth-child(3) .door-front {
-            background-color: gold;
-        }
-
-        .door:nth-child(4) .door-front {
-            background-color: green;
-        }
-
-        .door:nth-child(5) .door-front {
-            background-color: white;
-        }
-
-        .door:nth-child(6) .door-front {
-            background-color: lightblue;
-        }
-
-        .door:nth-child(7) .door-front {
-            background-color: purple;
-        }
-
-        .door:nth-child(8) .door-front {
-            background-color: pink;
-        }
-
-        .door:nth-child(9) .door-front {
-            background-color: brown;
-        }
-
-        .door:nth-child(10) .door-front {
-            background-color: orange;
-        }
-
-        .door:nth-child(11) .door-front {
-            background-color: yellow;
-        }
-
-        .door:nth-child(12) .door-front {
-            background-color: lightgreen;
-        }
-
-    </style>
+    .download-btn {
+      margin-top: 20px;
+    }
+    
+    footer {
+        margin-top:auto
+        font-size:.8rem}
+</style>
 </head>
 <body>
-
-    <div class="calendar" id="calendar">
-        <!-- Doors will be generated here -->
-    </div>
-
-    <script>
-        const calendar = document.getElementById('calendar');
-        const today = new Date();
-        const startDay = 13; // Start from December 13th
-
-        // Arrays with surprise image URLs (replace these with your actual image URLs)
-        const backImages = [
-            'b1.png', 'b2.png', 'b3.png', 
-            'b4.png', 'b5.png', 'b6.png',
-            'b7.png', 'b8.png', 'b9.png', 
-            'b10.png', 'b11.png', 'b12.png'
-        ];
-
-        // Function to create a door
-        function createDoor(i) {
-            const door = document.createElement('div');
-            door.className = 'door';
-            
-            const doorInner = document.createElement('div');
-            doorInner.className = 'door-inner';
-
-            const doorFront = document.createElement('div');
-            doorFront.className = 'door-front';
-            
-            // Add text: "December" and day number
-            const numberText = document.createElement('div');
-            numberText.className = 'number';
-            numberText.textContent = i; // The day number
-
-            doorFront.appendChild(numberText);
-
-            const doorBack = document.createElement('div');
-            doorBack.className = 'door-back';
-            
-            // Assign unique back image from the backImages array
-            doorBack.style.backgroundImage = `url("${backImages[i - startDay]}")`; // Ensure correct index
-
-            doorInner.appendChild(doorFront);
-            doorInner.appendChild(doorBack);
-            
-            // Enable or disable doors based on current date
-            if (today.getMonth() + 1 < 12 || today.getDate() < i) {
-                door.classList.add('disabled'); // Disable doors before the current date
-                doorFront.textContent = i; // Display the day number
-            } else {
-                door.addEventListener('click', () => {
-                    door.classList.toggle('flipped'); // Flip the door to show the surprise image
-                });
-            }
-
-            door.appendChild(doorInner);
-            calendar.appendChild(door);
-        }
-
-        // Loop to create doors for each day
-        for (let i = startDay; i <= 24; i++) {
-            createDoor(i);
-        }
-    </script>
-</body>
-</html>
+<div class="container">
