@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Run Tracker</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <style>
     /* Ensure full-screen background */
     html, body {
@@ -72,6 +73,22 @@
       font-weight: bold;
       margin-top: 20px;
     }
+
+    .gps-indicator {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 10px;
+        background-color: red; /* Default to red */
+    }
+    
+    .gps-status {
+        margin-top: -10px; /* Adjust position slightly */
+        font-size: small;
+        color: white;
+    }
+    
   </style>
 </head>
 <body>
@@ -81,6 +98,9 @@
   <p id="trackingIndicator" class="tracking-text hidden">Tracking...</p>
   
   <p id="startInfo" class="hidden"></p> <!-- New paragraph for start date and time -->
+
+  <div class="gps-indicator" id="gpsIndicator"></div>
+  <span id="gpsStatus" class="gps-status">Checking GPS...</span>
 
   <div class="stats">
     <p><strong>Distance:</strong> <span id="distance">0.00</span> miles</p>
@@ -99,6 +119,7 @@ let distance = 0; // Total distance in miles
 let elevationGain = 0; // Total elevation gain in feet
 let previousPosition = null; // Last recorded position
 let timerInterval = null; // Interval for updating time
+let gpsSignalGood = false; // Track GPS signal quality
 
 // Elements
 const trackingIndicator = document.getElementById("trackingIndicator");
@@ -108,6 +129,8 @@ const distanceElement = document.getElementById("distance");
 const timeElement = document.getElementById("time");
 const elevationElement = document.getElementById("elevation");
 const startInfo = document.getElementById("startInfo");
+const gpsIndicator = document.getElementById("gpsIndicator");
+const gpsStatus = document.getElementById("gpsStatus");
 
 // Start tracking
 startButton.addEventListener("click", () => {
@@ -143,9 +166,21 @@ stopButton.classList.remove("hidden");
 
 timerInterval = setInterval(updateTime, 1000);
 
+// Start watching the GPS position
 watchId = navigator.geolocation.watchPosition(
     (position) => {
         const { latitude, longitude, altitude } = position.coords;
+
+        // Check GPS accuracy
+        if (position.coords.accuracy <= 30) { // Check if accuracy is within acceptable range (30 meters)
+            gpsSignalGood = true; // Good GPS signal
+            gpsIndicator.style.backgroundColor = 'green'; // Change indicator to green
+            gpsStatus.textContent = "GPS Signal Good";
+        } else {
+            gpsSignalGood = false; // Poor GPS signal
+            gpsIndicator.style.backgroundColor = 'red'; // Change indicator to red
+            gpsStatus.textContent = "Poor GPS Signal";
+        }
 
         if (previousPosition) {
             const d = calculateAdvancedDistance(
@@ -159,7 +194,7 @@ watchId = navigator.geolocation.watchPosition(
 
             // Ignore small jumps less than ~10 feet (~3 meters)
             const movementThreshold = (10 / 5280); // Convert feet to miles
-            if (d > movementThreshold) { 
+            if (d > movementThreshold && gpsSignalGood) { 
                 distance += d;
 
                 // Only calculate elevation gain if the user has moved significantly
