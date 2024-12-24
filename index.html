@@ -34,9 +34,9 @@
     }
 
     .gps-indicator {
-        width: 50px; /* Adjusted size */
-        height: 50px; /* Adjusted size */
-        border-radius: 50%; /* Make it circular */
+        width: 80px; /* Adjusted size */
+        height: 20px; /* Adjusted height */
+        border-radius: 5px; /* Slightly rounded corners */
         background-color: red; /* Default to red */
         margin-bottom: 10px; /* Space below the indicator */
         display: flex;
@@ -101,16 +101,6 @@
       margin-top: 20px;
     }
     
-    .summary {
-        display: none; /* Initially hidden */
-        margin-top: 20px;
-        text-align: left; /* Align to left for better readability */
-    }
-    
-    .summary p {
-        margin-bottom: 10px; /* Spacing between summary items */
-    }
-    
   </style>
 </head>
 <body>
@@ -136,14 +126,6 @@
    <button id="startButton" class="button">Start</button>
    <button id="stopButton" class="button hidden">Stop</button>
 
-   <!-- Summary section -->
-   <div class="summary" id="summary">
-     <h2>Run Summary</h2>
-     <p id="summaryStartTime"></p>
-     <p id="summaryDistance"></p>
-     <p id="summaryDuration"></p>
-     <button id="newRunButton" class="button">Start New Run</button>
-   </div>
 </div>
 
 <script>
@@ -161,11 +143,6 @@ const stopButton = document.getElementById("stopButton");
 const distanceElement = document.getElementById("distance");
 const timeElement = document.getElementById("time");
 const startInfo = document.getElementById("startInfo");
-const summarySection = document.getElementById("summary");
-const summaryStartTime = document.getElementById("summaryStartTime");
-const summaryDistance = document.getElementById("summaryDistance");
-const summaryDuration = document.getElementById("summaryDuration");
-const newRunButton = document.getElementById("newRunButton");
 const gpsIndicator = document.getElementById("gpsIndicator");
 const gpsStatus = document.getElementById("gpsStatus");
 
@@ -182,11 +159,6 @@ startButton.addEventListener("click", () => {
 // Stop tracking
 stopButton.addEventListener("click", () => {
    stopTracking();
-});
-
-// Start a new run
-newRunButton.addEventListener("click", () => {
-   resetApp();
 });
 
 // Function to start tracking
@@ -260,7 +232,7 @@ function startTracking() {
    );
 }
 
-// Function to stop tracking and show summary
+// Function to stop tracking and save data as a text file
 function stopTracking() {
    clearInterval(timerInterval);
    navigator.geolocation.clearWatch(watchId);
@@ -270,28 +242,30 @@ function stopTracking() {
    startButton.classList.remove("hidden");
    stopButton.classList.add("hidden");
 
-   // Show summary section with results
-   summaryStartTime.textContent = `Start Time: ${startTime.toLocaleString()}`;
-   summaryDistance.textContent = `Distance: ${distance.toFixed(2)} miles`;
-   summaryDuration.textContent = `Duration: ${formatTime((new Date() - startTime) / 1000)}`;
-   
-   summarySection.style.display = 'block'; // Show the summary section
+   // Ask user if they want to save the run data
+   if (confirm("Do you want to save this run?")) {
+       saveRunData();
+   }
 }
 
-// Function to reset the app state for a new run
-function resetApp() {
-   distance = 0;
-   previousPosition = null;
+// Function to save run data as a text file
+function saveRunData() {
+   const duration=formatTime((new Date()-startTime)/1000);
+   const data=`Run Summary:
+Start Time:${startTime.toLocaleString()}
+Distance:${distance.toFixed(2)} miles
+Duration:${duration}`;
 
-   distanceElement.textContent = '0.00';
-   timeElement.textContent = '00:00';
-   startInfo.classList.add('hidden'); // Hide start info
-
-   summarySection.style.display = 'none'; // Hide the summary section
-
-   startButton.classList.remove("hidden"); // Show Start button again
-
-   gpsIndicator.style.backgroundColor = 'red'; // Reset GPS indicator to red
+// Create a Blob from the data and trigger download
+const blob=new Blob([data],{type:"text/plain"});
+const url=URL.createObjectURL(blob);
+const a=document.createElement("a");
+a.href=url;
+a.download=`Run_${new Date().toISOString().slice(0,10)}.txt`; // Name of the downloaded file
+document.body.appendChild(a);
+a.click(); // Trigger download
+document.body.removeChild(a); // Clean up
+URL.revokeObjectURL(url); // Free up memory
 }
 
 // Function to update elapsed time
