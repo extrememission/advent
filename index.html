@@ -200,7 +200,7 @@ Elevation Gain:${elevationGain}ft`;
 
 const blob=new Blob([data],{type:"text/plain"});
 const url=URL.createObjectURL(blob);
-const a=document.createElement("a");a.href=url;a.download="run_results.txt";document.body.appendChild(a);a.style.display='none';a.click();document.body.removeChild(a);URL.revokeObjectURL(url);}
+const a=document.createElement("a");a.href=url;a.download=`Run_${new Date().toISOString().slice(0,10)}.txt`;document.body.appendChild(a);a.style.display='none';a.click();document.body.removeChild(a);URL.revokeObjectURL(url);}
 
 // Function to update elapsed time
 function updateTime() {const currentTime=new Date();const elapsedSeconds=Math.floor((currentTime-startTime)/1000);const minutes=Math.floor(elapsedSeconds/60).toString().padStart(2,"0");const seconds=(elapsedSeconds%60).toString().padStart(2,"0");timeElement.textContent=`${minutes}:${seconds}`;}
