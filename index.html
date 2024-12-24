@@ -34,24 +34,18 @@
     }
 
     .gps-indicator {
-        width: 100px;
-        height: 20px;
+        width: 50px; /* Adjusted size */
+        height: 50px; /* Adjusted size */
+        border-radius: 50%; /* Make it circular */
         background-color: red; /* Default to red */
         margin-bottom: 10px; /* Space below the indicator */
-        position: relative; /* For needle positioning */
-        border-radius: 10px; /* Rounded corners */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-left: auto; /* Centering */
+        margin-right: auto; /* Centering */
     }
     
-    .gps-needle {
-        width: 5px;
-        height: 40px;
-        background-color: yellow; /* Needle color */
-        position: absolute;
-        bottom: -20px; /* Positioning below the indicator */
-        left: calc(50% - 2.5px); /* Center needle */
-        transform-origin: bottom; /* Rotate from the bottom */
-    }
-
     .gps-status {
         margin-top: -10px; /* Adjust position slightly */
         font-size: small;
@@ -125,9 +119,7 @@
 
   <p id="trackingIndicator" class="tracking-text hidden">Tracking...</p>
   
-  <div class="gps-indicator" id="gpsIndicator">
-     <div class="gps-needle" id="gpsNeedle"></div> <!-- Needle for the indicator -->
-   </div>
+   <div class="gps-indicator" id="gpsIndicator"></div>
    <span id="gpsStatus" class="gps-status">Checking GPS...</span>
 
    <p id="startInfo" class="hidden"></p> <!-- New paragraph for start date and time -->
@@ -160,6 +152,7 @@ let startTime = null; // Start time of the run
 let distance = 0; // Total distance in miles
 let previousPosition = null; // Last recorded position
 let timerInterval = null; // Interval for updating time
+let gpsSignalGood = false; // Track GPS signal quality
 
 // Elements
 const trackingIndicator = document.getElementById("trackingIndicator");
@@ -174,7 +167,6 @@ const summaryDistance = document.getElementById("summaryDistance");
 const summaryDuration = document.getElementById("summaryDuration");
 const newRunButton = document.getElementById("newRunButton");
 const gpsIndicator = document.getElementById("gpsIndicator");
-const gpsNeedle = document.getElementById("gpsNeedle");
 const gpsStatus = document.getElementById("gpsStatus");
 
 // Start tracking
@@ -221,24 +213,24 @@ function startTracking() {
 
            // Check GPS accuracy
            if (position.coords.accuracy <= 10) { // Excellent signal
-               gpsIndicator.style.backgroundColor = 'green';
-               gpsNeedle.style.transform = 'rotate(0deg)';
+               gpsSignalGood = true; // Good GPS signal
+               gpsIndicator.style.backgroundColor = 'green'; // Change indicator to green
                gpsStatus.textContent = "GPS Signal Excellent";
            } else if (position.coords.accuracy <= 20) { // Good signal
-               gpsIndicator.style.backgroundColor = 'lightgreen';
-               gpsNeedle.style.transform = 'rotate(45deg)';
+               gpsSignalGood = true; // Good GPS signal
+               gpsIndicator.style.backgroundColor = 'lightgreen'; // Change indicator to light green
                gpsStatus.textContent = "GPS Signal Good";
            } else if (position.coords.accuracy <= 30) { // Fair signal
-               gpsIndicator.style.backgroundColor = 'yellow';
-               gpsNeedle.style.transform = 'rotate(90deg)';
+               gpsSignalGood = false; // Fair GPS signal
+               gpsIndicator.style.backgroundColor = 'yellow'; // Change indicator to yellow
                gpsStatus.textContent = "GPS Signal Fair";
            } else if (position.coords.accuracy <= 50) { // Weak signal
-               gpsIndicator.style.backgroundColor = 'orange';
-               gpsNeedle.style.transform = 'rotate(135deg)';
+               gpsSignalGood = false; // Weak GPS signal
+               gpsIndicator.style.backgroundColor = 'orange'; // Change indicator to orange
                gpsStatus.textContent = "GPS Signal Weak";
            } else { // Very weak signal
-               gpsIndicator.style.backgroundColor = 'red';
-               gpsNeedle.style.transform = 'rotate(180deg)';
+               gpsSignalGood = false; // Very weak GPS signal
+               gpsIndicator.style.backgroundColor = 'red'; // Change indicator to red
                gpsStatus.textContent = "Very Poor GPS Signal";
            }
 
@@ -252,7 +244,7 @@ function startTracking() {
 
                // Ignore small jumps less than ~10 feet (~3 meters)
                const movementThreshold = (10 / 5280); // Convert feet to miles
-               if (d > movementThreshold) { 
+               if (d > movementThreshold && gpsSignalGood) { 
                    distance += d;
 
                    distanceElement.textContent = distance.toFixed(2);
