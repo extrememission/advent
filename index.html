@@ -6,6 +6,7 @@
   <title>Run Tracker</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <style>
+    /* Ensure full-screen background */
     html, body {
       margin: 0;
       padding: 0;
@@ -79,6 +80,8 @@
   <h1>Run Tracker</h1>
 
   <p id="trackingIndicator" class="tracking-text hidden">Tracking...</p>
+  
+  <p id="startInfo" class="hidden"></p> <!-- New paragraph for start date and time -->
 
   <div class="stats">
     <p><strong>Distance:</strong> <span id="distance">0.00</span> miles</p>
@@ -105,6 +108,7 @@ const stopButton = document.getElementById("stopButton");
 const distanceElement = document.getElementById("distance");
 const timeElement = document.getElementById("time");
 const elevationElement = document.getElementById("elevation");
+const startInfo = document.getElementById("startInfo");
 
 // Start tracking
 startButton.addEventListener("click", () => {
@@ -124,56 +128,61 @@ stopButton.addEventListener("click", () => {
 // Function to start tracking
 function startTracking() {
   startTime = new Date();
-  distance = 0;
-  elevationGain = 0;
-  previousPosition = null;
-
-  trackingIndicator.classList.remove("hidden"); // Show flashing "Tracking..." text
   
-  startButton.classList.add("hidden");
-  stopButton.classList.remove("hidden");
+// Display start date and time
+startInfo.textContent = `Run started at ${startTime.toLocaleString()}`;
+startInfo.classList.remove('hidden');
 
-  timerInterval = setInterval(updateTime, 1000);
+distance = 0;
+elevationGain = 0;
+previousPosition = null;
 
-  watchId = navigator.geolocation.watchPosition(
+trackingIndicator.classList.remove("hidden"); // Show flashing "Tracking..." text
+  
+startButton.classList.add("hidden");
+stopButton.classList.remove("hidden");
+
+timerInterval = setInterval(updateTime, 1000);
+
+watchId = navigator.geolocation.watchPosition(
     (position) => {
-      const { latitude, longitude, altitude } = position.coords;
+        const { latitude, longitude, altitude } = position.coords;
 
-      if (previousPosition) {
-        const d = calculateAdvancedDistance(
-          previousPosition.latitude,
-          previousPosition.longitude,
-          previousPosition.altitude || altitude || 0,
-          latitude,
-          longitude,
-          altitude || previousPosition.altitude || 0
-        );
+        if (previousPosition) {
+            const d = calculateAdvancedDistance(
+                previousPosition.latitude,
+                previousPosition.longitude,
+                previousPosition.altitude || altitude || 0,
+                latitude,
+                longitude,
+                altitude || previousPosition.altitude || 0
+            );
 
-        // Ignore small jumps less than ~50 feet (~0.01 miles)
-        if (d > 0.01) {
-          distance += d;
+            // Ignore small jumps less than ~50 feet (~0.01 miles)
+            if (d > 0.01) {
+                distance += d;
 
-          // Only calculate elevation gain if the user has moved significantly
-          if (altitude && Math.abs(altitude - previousPosition.altitude) > 10) {
-            const elevationChange = altitude - previousPosition.altitude;
+                // Only calculate elevation gain if the user has moved significantly
+                if (altitude && Math.abs(altitude - previousPosition.altitude) > 10) {
+                    const elevationChange = altitude - previousPosition.altitude;
 
-            if (elevationChange > 0) { // Only count upward movement as gain
-              elevationGain += elevationChange;
+                    if (elevationChange > 0) { // Only count upward movement as gain
+                        elevationGain += elevationChange;
+                    }
+                }
             }
-          }
+
+            distanceElement.textContent = distance.toFixed(2);
+            elevationElement.textContent = Math.round(elevationGain);
         }
 
-        distanceElement.textContent = distance.toFixed(2);
-        elevationElement.textContent = Math.round(elevationGain);
-      }
-
-      previousPosition = { latitude, longitude, altitude };
+        previousPosition = { latitude, longitude, altitude };
     },
     (error) => {
-      alert("Error getting location. Please ensure location services are enabled.");
+        alert("Error getting location. Please ensure location services are enabled.");
     },
     { enableHighAccuracy: true }
-  );
+);
 }
 
 // Function to stop tracking and generate an image
@@ -190,7 +199,19 @@ stopButton.classList.add("hidden");
 html2canvas(document.getElementById('tracker')).then(canvas => {
 const imageData=canvas.toDataURL('image/png');
 
-if(navigator.share){navigator.share({title:"Run Summary",text:"Check out my run!",files:[new File([imageData],'run.png',{type:'image/png'})]}).catch(err=>alert(`Error sharing:${err}`));}else{alert("Sharing is not supported on this device.");}});}
+if(navigator.share){navigator.share({title:"Run Summary",text:"Check out my run!",files:[new File([imageData],'run.png',{type:'image/png'})]}).then(()=>{resetApp();}).catch((err)=>{alert(`Error sharing:${err}`);});}else{alert("Sharing is not supported on this device.");resetApp();}});}
+
+// Function to reset the app state after sharing or saving
+function resetApp() {
+distance = 0;
+elevationGain = 0;
+previousPosition = null;
+
+distanceElement.textContent = '0.00';
+elevationElement.textContent = '0';
+timeElement.textContent = '00:00';
+startInfo.classList.add('hidden'); // Hide start info
+}
 
 // Function to update elapsed time
 function updateTime() {const currentTime=new Date();const elapsedSeconds=Math.floor((currentTime-startTime)/1000);const minutes=Math.floor(elapsedSeconds/60).toString().padStart(2,"0");const seconds=(elapsedSeconds%60).toString().padStart(2,"0");timeElement.textContent=`${minutes}:${seconds}`;}
