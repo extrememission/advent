@@ -144,20 +144,24 @@ function startTracking() {
         const d = calculateAdvancedDistance(
           previousPosition.latitude,
           previousPosition.longitude,
-          previousPosition.altitude || 0,
+          previousPosition.altitude || altitude || 0,
           latitude,
           longitude,
-          altitude || 0
+          altitude || previousPosition.altitude || 0
         );
 
         // Ignore small jumps less than ~50 feet (~0.01 miles)
         if (d > 0.01) {
           distance += d;
-        }
 
-        // Update elevation gain if altitude increases
-        if (altitude && altitude > (previousPosition.altitude || 0)) {
-          elevationGain += altitude - (previousPosition.altitude || 0);
+          // Only calculate elevation gain if the user has moved significantly
+          if (altitude && Math.abs(altitude - previousPosition.altitude) > 10) {
+            const elevationChange = altitude - previousPosition.altitude;
+
+            if (elevationChange > 0) { // Only count upward movement as gain
+              elevationGain += elevationChange;
+            }
+          }
         }
 
         distanceElement.textContent = distance.toFixed(2);
