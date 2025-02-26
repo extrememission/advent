@@ -1,297 +1,133 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Run Tracker</title>
-  <style>
-    /* Ensure full-screen background */
-    html, body {
-      margin: 0;
-      padding: 0;
-      height: 100%;
-      width: 100%;
-      font-family: Arial, sans-serif;
-    }
-
-    body {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      background-color: black; /* Black background */
-      color: white; /* White text for readability */
-    }
-
-    .container {
-      width: 100%;
-      max-width: 400px;
-      text-align: center;
-      padding: 20px;
-    }
-
-    h1 {
-      font-size: 2rem;
-    }
-
-    .gps-indicator {
-        width: 80px; /* Adjusted size */
-        height: 20px; /* Adjusted height */
-        border-radius: 5px; /* Slightly rounded corners */
-        background-color: red; /* Default to red */
-        margin-bottom: 10px; /* Space below the indicator */
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        margin-left: auto; /* Centering */
-        margin-right: auto; /* Centering */
-    }
-    
-    .gps-status {
-        margin-top: -10px; /* Adjust position slightly */
-        font-size: small;
-        color: white;
-    }
-
-    .stats {
-      font-size: 1.5rem; /* Large enough for quick glances */
-      font-weight: bold;
-      margin-top: 20px;
-    }
-
-    .stat-label {
-      font-size: 1.2rem; /* Label size */
-    }
-
-    .stat-value {
-      font-size: 2.5rem; /* Larger value size */
-      font-weight: bold;
-    }
-
-    .button {
-      display: inline-block;
-      margin-top: 20px; /* Standard button size */
-      padding: 10px 20px; 
-      font-size: 1rem; /* Standard font size */
-      color: black; /* Black text for contrast */
-      background-color: white; /* White button */
-      border-radius: 10px;
-      border: none;
-      cursor: pointer;
-    }
-
-    .button:hover {
-      background-color: #f0f0f0; /* Light gray hover effect */
-    }
-
-    .hidden {
-      display: none !important; /* Utility class to hide elements */
-    }
-
-    @keyframes pulse {
-      0% { opacity: 0.5; }
-      50% { opacity: 1; }
-      100% { opacity: 0.5; }
-    }
-
-    .tracking-text {
-      animation: pulse 1.5s infinite;
-      color: #00ff00; /* Bright green for visibility */
-      font-size: 2rem; /* Larger for prominence */
-      font-weight: bold;
-      margin-top: 20px;
-    }
-    
-    .summary {
-        display: none; /* Initially hidden */
-        margin-top: 20px;
-        text-align: left; /* Align to left for better readability */
-    }
-    
-    .summary p {
-        margin-bottom: 10px; /* Spacing between summary items */
-    }
-    
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roulette Wheel</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+            font-family: Arial, sans-serif;
+        }
+        #wheel {
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            position: relative;
+            overflow: hidden;
+            border: 5px solid #333;
+            margin-bottom: 20px;
+        }
+        .section {
+            position: absolute;
+            width: 50%;
+            height: 50%;
+            clip-path: polygon(100% 0, 0 0, 0 100%);
+            transform-origin: 100% 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+        #controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        input {
+            margin: 5px;
+            padding: 10px;
+            width: 200px;
+        }
+        button {
+            margin: 5px;
+            padding: 10px 20px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
 </head>
 <body>
-<div class="container">
-  <h1>Run Tracker</h1>
 
-   <button id="getGpsButton" class="button">Get GPS Signal</button> <!-- Only one GPS button -->
-   <div class="gps-indicator" id="gpsIndicator"></div>
-   <span id="gpsStatus" class="gps-status">Checking GPS...</span>
+    <div id="wheel"></div>
+    <div id="controls">
+        <input type="text" id="wordInput" placeholder="Enter word" />
+        <button id="addWord">Add Word</button>
+        <button id="done">Done</button>
+        <button id="spin" style="display:none;">Spin</button>
+        <button id="reset" style="display:none;">Reset</button>
+    </div>
 
-   <p id="startInfo" class="hidden"></p> <!-- New paragraph for start date and time -->
+    <script>
+        const wheel = document.getElementById('wheel');
+        const wordInput = document.getElementById('wordInput');
+        const addWordButton = document.getElementById('addWord');
+        const doneButton = document.getElementById('done');
+        const spinButton = document.getElementById('spin');
+        const resetButton = document.getElementById('reset');
 
-   <div class="stats">
-     <p class="stat-label"><strong>Distance:</strong></p>
-     <p id="distance" class="stat-value">0.00</p>
-     
-     <p class="stat-label"><strong>Time:</strong></p>
-     <p id="time" class="stat-value">00:00</p>
-     
-   </div>
+        const colors = ['#FF5733', '#33FF57', '#3357FF', '#FF33A1', '#FFBD33', '#33FFF5', '#A133FF', '#FF3333'];
+        let words = [];
+        let isEditing = true;
 
-   <button id="startButton" class="button hidden">Start Run</button>
-   <button id="stopButton" class="button hidden">Stop Run</button>
+        function createWheel() {
+            wheel.innerHTML = '';
+            for (let i = 0; i < 8; i++) {
+                const section = document.createElement('div');
+                section.className = 'section';
+                section.style.backgroundColor = colors[i];
+                section.style.transform = `rotate(${i * 45}deg)`;
+                section.innerText = isEditing ? '' : words[i] || '';
+                wheel.appendChild(section);
+            }
+        }
 
-</div>
+        addWordButton.addEventListener('click', () => {
+            if (words.length < 8) {
+                words.push(wordInput.value);
+                wordInput.value = '';
+                createWheel();
+            }
+        });
 
-<script>
-let watchId = null; // ID for geolocation tracking
-let startTime = null; // Start time of the run
-let distance = 0; // Total distance in miles
-let previousPosition = null; // Last recorded position
-let timerInterval = null; // Interval for updating time
-let gpsSignalGood = false; // Track GPS signal quality
+        doneButton.addEventListener('click', () => {
+            if (words.length === 8) {
+                isEditing = false;
+                createWheel();
+                doneButton.style.display = 'none';
+                addWordButton.style.display = 'none';
+                spinButton.style.display = 'inline';
+                resetButton.style.display = 'inline';
+            }
+        });
 
-// Elements
-const trackingIndicator = document.getElementById("trackingIndicator");
-const getGpsButton = document.getElementById("getGpsButton");
-const startButton = document.getElementById("startButton");
-const stopButton = document.getElementById("stopButton");
-const distanceElement = document.getElementById("distance");
-const timeElement = document.getElementById("time");
-const startInfo = document.getElementById("startInfo");
-const gpsIndicator = document.getElementById("gpsIndicator");
-const gpsStatus = document.getElementById("gpsStatus");
+        spinButton.addEventListener('click', () => {
+            const randomSpin = Math.floor(Math.random() * 360) + 720; // Spin at least 2 full rotations
+            wheel.style.transition = 'transform 3s ease-out';
+            wheel.style.transform = `rotate(${randomSpin}deg)`;
+        });
 
-// Activate GPS on button click
-getGpsButton.addEventListener("click", () => {
-   if (!navigator.geolocation) {
-       alert("Geolocation is not supported by your browser.");
-       return;
-   }
-   // Start watching position after clicking the button
-   watchPosition();
-});
+        resetButton.addEventListener('click', () => {
+            words = [];
+            isEditing = true;
+            createWheel();
+            doneButton.style.display = 'inline';
+            addWordButton.style.display = 'inline';
+            spinButton.style.display = 'none';
+            resetButton.style.display = 'none';
+            wordInput.value = '';
+        });
 
-// Function to watch position
-function watchPosition() {
-   navigator.geolocation.watchPosition(
-       (position) => {
-           const { latitude, longitude } = position.coords;
-
-           // Check GPS accuracy
-           if (position.coords.accuracy <= 10) { // Excellent signal
-               gpsSignalGood = true; // Good GPS signal
-               gpsIndicator.style.backgroundColor = 'green'; // Change indicator to green
-               gpsStatus.textContent = "GPS Signal Excellent";
-           } else if (position.coords.accuracy <= 20) { // Good signal
-               gpsSignalGood = true; // Good GPS signal
-               gpsIndicator.style.backgroundColor = 'lightgreen'; // Change indicator to light green
-               gpsStatus.textContent = "GPS Signal Good";
-           } else if (position.coords.accuracy <= 30) { // Fair signal
-               gpsSignalGood = false; // Fair GPS signal
-               gpsIndicator.style.backgroundColor = 'yellow'; // Change indicator to yellow
-               gpsStatus.textContent = "GPS Signal Fair";
-           } else if (position.coords.accuracy <= 50) { // Weak signal
-               gpsSignalGood = false; // Weak GPS signal
-               gpsIndicator.style.backgroundColor = 'orange'; // Change indicator to orange
-               gpsStatus.textContent = "GPS Signal Weak";
-           } else { // Very weak signal
-               gpsSignalGood = false; // Very weak GPS signal
-               gpsIndicator.style.backgroundColor = 'red'; // Change indicator to red
-               gpsStatus.textContent = "Very Poor GPS Signal";
-           }
-
-           startButton.classList.remove("hidden"); // Show Start Run button after getting GPS signal.
-       },
-       (error) => {
-           alert("Error getting location. Please ensure location services are enabled.");
-       },
-       { enableHighAccuracy: true }
-   );
-}
-
-// Function to start tracking 
-function startTracking() {
-   startTime = new Date();
-  
-   // Display start date and time
-   startInfo.textContent = `Run started at ${startTime.toLocaleString()}`;
-   startInfo.classList.remove('hidden');
-
-   distance = 0;
-   previousPosition = null;
-
-   trackingIndicator.classList.remove("hidden"); // Show flashing "Tracking..." text
-  
-   getGpsButton.classList.add("hidden"); // Hide Get GPS Signal button after starting run.
-   stopButton.classList.remove("hidden");
-
-   timerInterval = setInterval(updateTime, 1000);
-}
-
-// Function to stop tracking and save data as a text file 
-function stopTracking() {
-   clearInterval(timerInterval);
-   navigator.geolocation.clearWatch(watchId);
-
-   trackingIndicator.classList.add("hidden"); // Hide flashing "Tracking..." text
-
-   getGpsButton.classList.remove("hidden"); // Show Get GPS Signal button again.
-   startButton.classList.remove("hidden");
-   stopButton.classList.add("hidden");
-
-   // Ask user if they want to save the run data 
-   if (confirm("Do you want to save this run?")) {
-       saveRunData();
-   }
-}
-
-// Function to save run data as a text file 
-function saveRunData() {
-   const duration=formatTime((new Date()-startTime)/1000);
-   const data=`Run Summary:
-Start Time:${startTime.toLocaleString()}
-Distance:${distance.toFixed(2)} miles
-Duration:${duration}`;
-
-// Create a Blob from the data and trigger download 
-const blob=new Blob([data],{type:"text/plain"});
-const url=URL.createObjectURL(blob);
-const a=document.createElement("a");
-a.href=url;
-a.download=`Run_${new Date().toISOString().slice(0,10)}.txt`; // Name of the downloaded file 
-document.body.appendChild(a);
-a.click(); // Trigger download 
-document.body.removeChild(a); // Clean up 
-URL.revokeObjectURL(url); // Free up memory 
-}
-
-// Function to update elapsed time 
-function updateTime() {
-   const currentTime=new Date();
-   const elapsedSeconds=Math.floor((currentTime-startTime)/1000);
-   const minutes=Math.floor(elapsedSeconds/60).toString().padStart(2,"0");
-   const seconds=(elapsedSeconds%60).toString().padStart(2,"0");
-   
-   timeElement.textContent=`${minutes}:${seconds}`;
-}
-
-// Calculate advanced distance function remains unchanged...
-function calculateAdvancedDistance(lat1, lon1, lat2, lon2) {
-   const R=3958.8; // Radius of Earth in miles 
-   const dLat=degreesToRadians(lat2-lat1); 
-   const dLon=degreesToRadians(lon2-lon1);
-   
-   const a=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(degreesToRadians(lat1))*Math.cos(degreesToRadians(lat2))*Math.sin(dLon/2)*Math.sin(dLon/2);
-   
-   const c=2*Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-   
-   return R * c; // Return distance in miles 
-}
-
-// Helper functions remain unchanged...
-function degreesToRadians(degrees) { return degrees * (Math.PI / 180); }
-
-function formatTime(totalSeconds) {
-   const minutes=Math.floor(totalSeconds/60).toString().padStart(2,"0");
-   const seconds=(totalSeconds%60).toString().padStart(2,"0");
-   
-   return `${minutes}:${seconds}`;
-}
-</script>
-</body>
-</html>
+        createWheel
