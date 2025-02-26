@@ -1,133 +1,225 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Roulette Wheel</title>
-    <style>
-        body {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            background-color: #f0f0f0;
-            font-family: Arial, sans-serif;
-        }
-        #wheel {
-            width: 300px;
-            height: 300px;
-            border-radius: 50%;
-            position: relative;
-            overflow: hidden;
-            border: 5px solid #333;
-            margin-bottom: 20px;
-        }
-        .section {
-            position: absolute;
-            width: 50%;
-            height: 50%;
-            clip-path: polygon(100% 0, 0 0, 0 100%);
-            transform-origin: 100% 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: bold;
-        }
-        #controls {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        input {
-            margin: 5px;
-            padding: 10px;
-            width: 200px;
-        }
-        button {
-            margin: 5px;
-            padding: 10px 20px;
-            background-color: #007BFF;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #0056b3;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>8-Part Roulette Wheel</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+    }
+    .wheel-container {
+      position: relative;
+      width: 300px;
+      height: 300px;
+      margin: 50px auto;
+      border-radius: 50%;
+      border: 5px solid black;
+    }
+    .wheel {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: conic-gradient(
+        red 0deg 45deg,
+        orange 45deg 90deg,
+        yellow 90deg 135deg,
+        green 135deg 180deg,
+        blue 180deg 225deg,
+        indigo 225deg 270deg,
+        violet 270deg 315deg,
+        pink 315deg 360deg
+      );
+    }
+    .wheel > .wheel-segment {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      transform-origin: center;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 18px;
+      color: white;
+      font-weight: bold;
+      opacity: 0;
+    }
+    .wheel-container .pointer {
+      position: absolute;
+      bottom: -30px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 10px solid transparent;
+      border-right: 10px solid transparent;
+      border-top: 20px solid black;
+    }
+    .input-section {
+      margin-top: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .input-section input {
+      width: 200px;
+      margin-bottom: 10px;
+      padding: 5px;
+    }
+    #doneButton {
+      margin-top: 10px;
+      padding: 10px 20px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    #resetButton {
+      margin-top: 10px;
+      padding: 10px 20px;
+      background-color: #f44336;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    #resetButton:hover, #doneButton:hover {
+      opacity: 0.8;
+    }
+    .hidden {
+      display: none;
+    }
+  </style>
 </head>
 <body>
-
-    <div id="wheel"></div>
-    <div id="controls">
-        <input type="text" id="wordInput" placeholder="Enter word" />
-        <button id="addWord">Add Word</button>
-        <button id="done">Done</button>
-        <button id="spin" style="display:none;">Spin</button>
-        <button id="reset" style="display:none;">Reset</button>
+  <h1>8-Part Roulette Wheel</h1>
+  <div class="wheel-container">
+    <div class="wheel" id="wheel">
+      <div class="wheel-segment" style="transform: rotate(0deg);">1</div>
+      <div class="wheel-segment" style="transform: rotate(45deg);">2</div>
+      <div class="wheel-segment" style="transform: rotate(90deg);">3</div>
+      <div class="wheel-segment" style="transform: rotate(135deg);">4</div>
+      <div class="wheel-segment" style="transform: rotate(180deg);">5</div>
+      <div class="wheel-segment" style="transform: rotate(225deg);">6</div>
+      <div class="wheel-segment" style="transform: rotate(270deg);">7</div>
+      <div class="wheel-segment" style="transform: rotate(315deg);">8</div>
     </div>
+    <div class="pointer"></div>
+  </div>
 
-    <script>
-        const wheel = document.getElementById('wheel');
-        const wordInput = document.getElementById('wordInput');
-        const addWordButton = document.getElementById('addWord');
-        const doneButton = document.getElementById('done');
-        const spinButton = document.getElementById('spin');
-        const resetButton = document.getElementById('reset');
+  <div class="input-section" id="inputSection">
+    <h3>Enter Words</h3>
+    <div id="inputsContainer"></div>
+    <button id="doneButton">Done</button>
+  </div>
 
-        const colors = ['#FF5733', '#33FF57', '#3357FF', '#FF33A1', '#FFBD33', '#33FFF5', '#A133FF', '#FF3333'];
-        let words = [];
-        let isEditing = true;
+  <div id="spinSection" class="hidden">
+    <button id="resetButton">Reset</button>
+    <button id="spinButton">Spin!</button>
+  </div>
 
-        function createWheel() {
-            wheel.innerHTML = '';
-            for (let i = 0; i < 8; i++) {
-                const section = document.createElement('div');
-                section.className = 'section';
-                section.style.backgroundColor = colors[i];
-                section.style.transform = `rotate(${i * 45}deg)`;
-                section.innerText = isEditing ? '' : words[i] || '';
-                wheel.appendChild(section);
-            }
-        }
+  <script>
+    const segments = document.querySelectorAll('.wheel-segment');
+    const wheel = document.getElementById('wheel');
+    const pointer = document.querySelector('.pointer');
+    const inputSection = document.getElementById('inputSection');
+    const inputsContainer = document.getElementById('inputsContainer');
+    const doneButton = document.getElementById('doneButton');
+    const spinButton = document.getElementById('spinButton');
+    const resetButton = document.getElementById('resetButton');
+    const spinSection = document.getElementById('spinSection');
 
-        addWordButton.addEventListener('click', () => {
-            if (words.length < 8) {
-                words.push(wordInput.value);
-                wordInput.value = '';
-                createWheel();
-            }
+    let words = [];
+    let spinning = false;
+
+    // Create input fields for the words
+    for (let i = 0; i < 8; i++) {
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.placeholder = `Word ${i + 1}`;
+      inputsContainer.appendChild(input);
+    }
+
+    // Handle Done button
+    doneButton.addEventListener('click', () => {
+      words = Array.from(inputsContainer.getElementsByTagName('input')).map(input => input.value);
+      if (words.length === 8 && words.every(word => word.trim())) {
+        // Hide input section and show spin section
+        inputSection.classList.add('hidden');
+        spinSection.classList.remove('hidden');
+
+        // Assign words to the wheel segments
+        segments.forEach((segment, index) => {
+          segment.textContent = words[index];
         });
+      } else {
+        alert("Please enter 8 valid words.");
+      }
+    });
 
-        doneButton.addEventListener('click', () => {
-            if (words.length === 8) {
-                isEditing = false;
-                createWheel();
-                doneButton.style.display = 'none';
-                addWordButton.style.display = 'none';
-                spinButton.style.display = 'inline';
-                resetButton.style.display = 'inline';
-            }
-        });
+    // Handle Spin button
+    spinButton.addEventListener('click', () => {
+      if (spinning) return;
+      spinning = true;
 
-        spinButton.addEventListener('click', () => {
-            const randomSpin = Math.floor(Math.random() * 360) + 720; // Spin at least 2 full rotations
-            wheel.style.transition = 'transform 3s ease-out';
-            wheel.style.transform = `rotate(${randomSpin}deg)`;
-        });
+      const randomDegree = Math.floor(Math.random() * 360) + 3600; // random spin (at least 10 full rotations)
+      const rotateValue = `rotate(${randomDegree}deg)`;
+      wheel.style.transition = 'transform 4s ease-out';
+      wheel.style.transform = rotateValue;
 
-        resetButton.addEventListener('click', () => {
-            words = [];
-            isEditing = true;
-            createWheel();
-            doneButton.style.display = 'inline';
-            addWordButton.style.display = 'inline';
-            spinButton.style.display = 'none';
-            resetButton.style.display = 'none';
-            wordInput.value = '';
-        });
+      // After spinning, reset wheel and hide pointer
+      setTimeout(() => {
+        const finalDegree = randomDegree % 360;
+        const index = Math.floor(finalDegree / 45);
+        alert(`Wheel stopped at: ${words[index]}`);
+        spinning = false;
+      }, 4000);
+    });
 
-        createWheel
+    // Handle Reset button
+    resetButton.addEventListener('click', () => {
+      // Reset the input section
+      inputSection.classList.remove('hidden');
+      spinSection.classList.add('hidden');
+      words = [];
+      inputsContainer.innerHTML = '';
+      for (let i = 0; i < 8; i++) {
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.placeholder = `Word ${i + 1}`;
+        inputsContainer.appendChild(input);
+      }
+    });
+
+    // Make the wheel spin with drag
+    let startAngle = 0;
+    let dragStartAngle = 0;
+    let isDragging = false;
+
+    wheel.addEventListener('touchstart', (e) => {
+      if (spinning) return;
+      isDragging = true;
+      dragStartAngle = e.changedTouches[0].clientX;
+    });
+
+    wheel.addEventListener('touchmove', (e) => {
+      if (!isDragging) return;
+      const dragDistance = e.changedTouches[0].clientX - dragStartAngle;
+      startAngle += dragDistance;
+      wheel.style.transform = `rotate(${startAngle}deg)`;
+      dragStartAngle = e.changedTouches[0].clientX;
+    });
+
+    wheel.addEventListener('touchend', () => {
+      isDragging = false;
+    });
+  </script>
+</body>
+</html>
