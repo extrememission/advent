@@ -126,6 +126,32 @@
   </div>
 
   <script>
+  // Prevent touch events from causing the page to scroll
+wheel.addEventListener('touchstart', (e) => {
+  if (spinning) return;
+  isDragging = true;
+  dragStartAngle = e.changedTouches[0].clientX;
+
+  // Prevent default touch behavior (scrolling, zooming, etc.)
+  e.preventDefault();
+}, { passive: false });
+
+wheel.addEventListener('touchmove', (e) => {
+  if (!isDragging) return;
+  const dragDistance = e.changedTouches[0].clientX - dragStartAngle;
+  startAngle += dragDistance;
+  wheel.style.transform = `rotate(${startAngle}deg)`;
+  dragStartAngle = e.changedTouches[0].clientX;
+
+  // Prevent default touch behavior (scrolling, zooming, etc.)
+  e.preventDefault();
+}, { passive: false });
+
+wheel.addEventListener('touchend', (e) => {
+  isDragging = false;
+  // Prevent default touch behavior (scrolling, zooming, etc.)
+  e.preventDefault();
+}, { passive: false });
     const segments = document.querySelectorAll('.wheel-segment');
     const wheel = document.getElementById('wheel');
     const pointer = document.querySelector('.pointer');
